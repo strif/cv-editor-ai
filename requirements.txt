@@ -1,5 +1,6 @@
 streamlit
-google-api-python-client
-google-auth
 openai
 langchain
+langchain-community
+google-auth
+google-api-python-client
