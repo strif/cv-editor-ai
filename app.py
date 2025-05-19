@@ -37,8 +37,7 @@ Suggest an improved version of this text.
 
     st.markdown("### 📝 Preview Changes")
     for p in preview:
-        st.markdown(f"""
-**Before:**  
+        st.markdown(f"""**Before:**  
 {p['old']}
 
 **After:**  
@@ -47,8 +46,8 @@ Suggest an improved version of this text.
 """)
 
     if st.button("✅ Apply to Slides"):
-        apply_updates_to_slides(PRESENTATION_ID, [
-            {"objectId": p["objectId"], "new_text": p["new"]}
-            for p in preview
-        ])
+        apply_updates_to_slides(
+            PRESENTATION_ID,
+            [{"objectId": p["objectId"], "new_text": p["new"]} for p in preview]
+        )
         st.success("Slides updated successfully.")
