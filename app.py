@@ -23,19 +23,21 @@ if trigger:
         objectId = obj['objectId']
         full_prompt = f"""You are editing a CV. Here is a section of the slide:
 
-        ---
-        {text}
-        ---
+---
+{text}
+---
 
-        Based on the job post: {job_url}
-        And this additional input: {custom_prompt}
+Based on the job post: {job_url}
+And this additional input: {custom_prompt}
 
-        Suggest an improved version of this text.
-        """
+Suggest an improved version of this text.
+"""
         new_text = agent.run(full_prompt)
         preview.append({ "objectId": objectId, "old": text, "new": new_text })
 
-   st.markdown(f"""
+    st.markdown("### 📝 Preview Changes")
+    for p in preview:
+        st.markdown(f"""
 **Before:**  
 {p['old']}
 
@@ -45,5 +47,8 @@ if trigger:
 """)
 
     if st.button("✅ Apply to Slides"):
-        apply_updates_to_slides(PRESENTATION_ID, [{"objectId": p["objectId"], "new_text": p["new"]} for p in preview])
+        apply_updates_to_slides(PRESENTATION_ID, [
+            {"objectId": p["objectId"], "new_text": p["new"]}
+            for p in preview
+        ])
         st.success("Slides updated successfully.")
