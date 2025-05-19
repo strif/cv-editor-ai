@@ -3,6 +3,7 @@ from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import ConversationChain
 from langchain.memory import ConversationBufferMemory
 
+@st.cache_resource
 def get_conversational_agent():
     api_key = st.secrets["openai"]["api_key"]
     llm = ChatOpenAI(openai_api_key=api_key, temperature=0.7)
