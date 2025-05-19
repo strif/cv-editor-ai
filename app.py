@@ -10,7 +10,7 @@ job_url = st.text_input("🔗 Paste LinkedIn Job URL (optional)")
 custom_prompt = st.text_area("🧠 Custom Prompt")
 trigger = st.button("🧪 Generate Suggestions")
 
-st.write("Using API key:", st.secrets["openai"]["api_key"][:4] + "..." if "openai" in st.secrets else "No API key found")
+st.write("Using API key:", st.secrets["openai"]["api_key"])
 
 
 if trigger:
