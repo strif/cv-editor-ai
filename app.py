@@ -35,14 +35,14 @@ if trigger:
         new_text = agent.run(full_prompt)
         preview.append({ "objectId": objectId, "old": text, "new": new_text })
 
-    st.markdown("### 📝 Preview Changes")
-    for p in preview:
-        st.markdown(f"**Before:** {p['old']}")
-        
+   st.markdown(f"""
+**Before:**  
+{p['old']}
 
-
-**After:** {p['new']}
----")
+**After:**  
+{p['new']}
+---
+""")
 
     if st.button("✅ Apply to Slides"):
         apply_updates_to_slides(PRESENTATION_ID, [{"objectId": p["objectId"], "new_text": p["new"]} for p in preview])
