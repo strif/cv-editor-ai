@@ -37,7 +37,9 @@ if trigger:
 
     st.markdown("### 📝 Preview Changes")
     for p in preview:
-        st.markdown(f"**Before:** {p['old']}
+        st.markdown(f"**Before:** {p['old']}")
+        
+
 
 **After:** {p['new']}
 ---")
