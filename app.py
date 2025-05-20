@@ -28,7 +28,7 @@ with open(cv_path, "r", encoding="utf-8") as f:
     cv_data = json.load(f)
 
 # View CV
-with st.expander("View CV"):
+with st.expander("📄 View CV"):
     st.code(json.dumps(cv_data, indent=2), language="json")
 
 # Job URL input
@@ -83,7 +83,7 @@ prompt = st.text_area("Prompt:", value=st.session_state.prompt, height=400)
 if prompt != st.session_state.prompt:
     st.session_state.prompt = prompt
 
-def count_tokens(text: str, model_name: str = "gpt-4o-32k") -> int:
+def count_tokens(text: str, model_name: str = "gpt-4.1") -> int:
     encoding = tiktoken.encoding_for_model(model_name)
     tokens = encoding.encode(text)
     return len(tokens)
@@ -94,15 +94,15 @@ def count_tokens(text: str, model_name: str = "gpt-4o-32k") -> int:
     retry=retry_if_exception_type(RateLimitError),
 )
 def call_agent(prompt):
-    # Use GPT-4o with 32k token support
-    agent = get_conversational_agent(model_name="gpt-4o-32k")
+    # Use GPT-4.1 model with extended context
+    agent = get_conversational_agent(model_name="gpt-4.1")
     return agent.run(prompt)
 
 if st.button("🚀 Align CV"):
     token_count = count_tokens(st.session_state.prompt)
     st.info(f"📝 Prompt token count: **{token_count}**")
 
-    max_tokens = 32768
+    max_tokens = 40000  # GPT-4.1 supports up to ~1 million tokens
     if token_count > max_tokens:
         st.error(f"❌ Your prompt is too long by {token_count - max_tokens} tokens. Please shorten the CV or job description or prompt.")
     else:
