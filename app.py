@@ -178,7 +178,7 @@ def count_tokens(text: str, model_name: str = "gpt-4o-32k") -> int:
     retry=retry_if_exception_type(RateLimitError),
 )
 def call_agent(prompt):
-    agent = get_conversational_agent()
+    agent = get_conversational_agent(model_name="gpt-4o-32k")
     return agent.run(prompt)
 
 if st.button("🚀 Optimize CV JSON"):
