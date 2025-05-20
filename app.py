@@ -110,23 +110,7 @@ cv_data = {
 st.subheader("Optional Job Role to Tailor For")
 job_desc = st.text_area("Paste the job description or target role (optional):")
 
-# Function to count tokens for the prompt
-def count_tokens(text: str, model_name: str = "gpt-4o-mini") -> int:
-    encoding = tiktoken.encoding_for_model(model_name)
-    tokens = encoding.encode(text)
-    return len(tokens)
-
-# Retry logic for API calls
-@retry(
-    wait=wait_random_exponential(min=2, max=10),
-    stop=stop_after_attempt(5),
-    retry=retry_if_exception_type(RateLimitError),
-)
-def call_agent(prompt):
-    agent = get_conversational_agent()
-    return agent.run(prompt)
-
-# Compose the prompt (extract to a function for easy editing if you want)
+# Function to create the prompt string
 def create_prompt(cv_json, job_description):
     return f"""
 You are an expert career advisor helping improve a JSON-based CV.
@@ -145,16 +129,36 @@ CV JSON:
 {json.dumps(cv_json, indent=2)}
 """
 
-# Optimize button
+# Initialize default prompt
+default_prompt = create_prompt(cv_data, job_desc)
+
+# Editable prompt input
+st.subheader("Edit the prompt to customize your CV optimization")
+prompt = st.text_area("Prompt:", value=default_prompt, height=400)
+
+# Function to count tokens for the prompt
+def count_tokens(text: str, model_name: str = "gpt-4o-mini") -> int:
+    encoding = tiktoken.encoding_for_model(model_name)
+    tokens = encoding.encode(text)
+    return len(tokens)
+
+# Retry logic for API calls
+@retry(
+    wait=wait_random_exponential(min=2, max=10),
+    stop=stop_after_attempt(5),
+    retry=retry_if_exception_type(RateLimitError),
+)
+def call_agent(prompt):
+    agent = get_conversational_agent()
+    return agent.run(prompt)
+
 if st.button("🚀 Optimize CV JSON"):
-    prompt = create_prompt(cv_data, job_desc)
     token_count = count_tokens(prompt)
     st.info(f"📝 Prompt token count: **{token_count}**")
 
-    # Warn if token count too high for GPT-4o-mini (16,385 tokens max)
     max_tokens = 16385
     if token_count > max_tokens:
-        st.error(f"❌ Your prompt is too long by {token_count - max_tokens} tokens. Please shorten the CV or job description.")
+        st.error(f"❌ Your prompt is too long by {token_count - max_tokens} tokens. Please shorten the CV or job description or prompt.")
     else:
         with st.spinner("Calling LLM to optimize your CV JSON..."):
             try:
