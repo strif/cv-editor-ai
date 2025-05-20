@@ -88,7 +88,7 @@ def count_tokens(text: str, model_name: str = "gpt-4.1") -> int:
         encoding = tiktoken.encoding_for_model(model_name)
     except KeyError:
         # Fallback to a default encoding if the model name is unrecognized
-        encoding = tiktoken.get_encoding("cl100k_base")
+        encoding = tiktoken.get_encoding("cl100k_base")  # Common fallback encoding
     tokens = encoding.encode(text)
     return len(tokens)
 
