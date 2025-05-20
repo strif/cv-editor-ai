@@ -167,7 +167,7 @@ prompt = st.text_area("Prompt:", value=st.session_state.prompt, height=400)
 if prompt != st.session_state.prompt:
     st.session_state.prompt = prompt
 
-def count_tokens(text: str, model_name: str = "gpt-4o-mini") -> int:
+def count_tokens(text: str, model_name: str = "gpt-4o-32k") -> int:
     encoding = tiktoken.encoding_for_model(model_name)
     tokens = encoding.encode(text)
     return len(tokens)
@@ -185,7 +185,7 @@ if st.button("🚀 Optimize CV JSON"):
     token_count = count_tokens(st.session_state.prompt)
     st.info(f"📝 Prompt token count: **{token_count}**")
 
-    max_tokens = 30000
+    max_tokens = 32768
     if token_count > max_tokens:
         st.error(f"❌ Your prompt is too long by {token_count - max_tokens} tokens. Please shorten the CV or job description or prompt.")
     else:
