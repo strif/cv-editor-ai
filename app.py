@@ -1,85 +1,136 @@
 import streamlit as st
-import time
-from settings import PRESENTATION_ID
-from gslides_utils import extract_slide_objects, apply_updates_to_slides
+import json
 from llm_agent import get_conversational_agent
 
-# Config
-MAX_SLIDES = 5  # Limit how many slides to process
-THROTTLE_SECONDS = 1  # Add delay between API calls to avoid rate limits
+st.set_page_config(page_title="AI CV JSON Optimizer", layout="wide")
+st.title("📄 AI-Powered JSON CV Optimizer")
 
-# Streamlit setup
-st.set_page_config(page_title="AI CV Editor", layout="wide")
-st.title("AI-Powered CV Editor (Google Slides + LangChain)")
+# Load static CV JSON (you can load from file or input later)
+cv_data = {
+  "personal_info": {
+    "name": "Kostas Voudouris",
+    "headline": "Product | Marketing | Innovation",
+    "contact": {
+      "address": "58 Elvendon Road, London, United Kingdom",
+      "phone": "07530525525",
+      "email": "kostantinosv@gmail.com"
+    },
+    "nationality": "British / Greek",
+    "linkedin_profile": "",
+    "profile_description": "Dedicated to driving product innovation and improving performance metrics through extensive leadership experience. Passionate about using technology to deliver impactful solutions that fuel growth in fast-paced environments. Eager to contribute to a visionary team shaping the future of digital marketing and product development.",
+    "hobbies": "",
+    "skills": [
+      "Team Management",
+      "Early Stage Innovation & AI",
+      "Product Management",
+      "Python",
+      "Google Cloud",
+      "AWS",
+      "Ad Platforms"
+    ]
+  },
+  "employment_history": [
+    {
+      "company": "Choreograph",
+      "title": "SVP, Product (Commerce)",
+      "from": "July 2024",
+      "to": "Present",
+      "location": "London",
+      "responsibilities_or_achievements": [
+        "Leads a 30-person multidisciplinary team spanning product, engineering, data science, UX, and analytics.",
+        "Drives the global vision and strategy for commerce products, aligning cross-functional stakeholders and resources around a unified portfolio.",
+        "Oversees budgeting, prioritization, and execution of high-impact initiatives across the commerce ecosystem."
+      ]
+    },
+    {
+      "company": "EssenceMediacom",
+      "title": "VP of Product Innovation",
+      "from": "November 2022",
+      "to": "May 2024",
+      "location": "",
+      "responsibilities_or_achievements": [
+        "Executed innovation frameworks, translating vision into high-impact products.",
+        "Prioritized business challenges, driving transformative AI-driven solutions. Led GenAI cohorts, offering training on LLMs and AI best practices.",
+        "Formed and directed cross-functional teams, delivering iterative Proof of Concepts, MVPs, and successful product launches."
+      ]
+    },
+    {
+      "company": "Essence",
+      "title": "Business Owner - OCTRA (Product)",
+      "from": "May 2020",
+      "to": "June 2024",
+      "location": "",
+      "responsibilities_or_achievements": [
+        "Pioneered OCTRA, a GroupM-level USP used by 80+ global clients.",
+        "Led a 45-person team across product, engineering, design, QA, and customer success.",
+        "Oversaw pricing strategy, forecasting, and revenue reporting, while establishing feedback loops to keep the roadmap aligned with client needs."
+      ]
+    },
+    {
+      "company": "Essence Global",
+      "title": "Global Head of Media Technology",
+      "from": "January 2018",
+      "to": "June 2024",
+      "location": "London",
+      "responsibilities_or_achievements": [
+        "Led a global team of 15, building advanced software to tackle complex media challenges.",
+        "Acted as a key technology stakeholder, shaping strategic decisions and the tech vision.",
+        "Mentored internal talent, providing hands-on training in agile development."
+      ]
+    },
+    {
+      "company": "Maxus - Essence Global",
+      "title": "Head of Organic & Content Performance",
+      "from": "November 2011",
+      "to": "December 2017",
+      "location": "London",
+      "responsibilities_or_achievements": [
+        "Responsible for the P&L of a 20-member team introducing new services at global scale.",
+        "Services included SEO, Conversion Rate Optimization, and Performance Content.",
+        "Led recruiting, pitching, onboarding, and servicing clients including Apple, Burberry & UPS."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Computer Science and AI",
+      "university": "City, University of London",
+      "from": "January 2008",
+      "to": "January 2011",
+      "notes": "Graduated with a First Class Degree"
+    }
+  ]
+}
 
-# Inputs
-job_url = st.text_input("🔗 Paste LinkedIn Job URL (optional)")
-custom_prompt = st.text_area("🧠 Custom Prompt")
-trigger = st.button("🧪 Generate Suggestions")
+# UI Inputs
+st.subheader("Optional Job Role to Tailor For")
+job_desc = st.text_area("Paste the job description or target role (optional):")
 
-# Session state
-if "preview" not in st.session_state:
-    st.session_state.preview = None
-if "objects" not in st.session_state:
-    st.session_state.objects = None
+# Run
+if st.button("🚀 Optimize CV JSON"):
+    with st.spinner("Calling LLM to optimize your CV JSON..."):
+        agent = get_conversational_agent()
 
-if trigger:
-    with st.spinner("📤 Extracting Slides Content..."):
-        st.session_state.objects = extract_slide_objects(PRESENTATION_ID)
+        full_prompt = f"""
+You are an expert career advisor helping improve a JSON-based CV.
 
-    total_found = len(st.session_state.objects)
-    st.success(f"Found {total_found} text elements. Processing up to {MAX_SLIDES}.")
+Below is a user's CV in JSON format. Rewrite and enhance this CV:
+- Highlight key skills and achievements for leadership/product roles.
+- Tailor it towards modern tech/innovation/product environments.
+- Keep it in valid JSON structure.
+- Prioritize clarity, brevity, and impact.
+- Do not omit important responsibilities unless redundant.
+- If a job description is provided, align it accordingly.
 
-    agent = get_conversational_agent()
-    preview = []
+{"Here is the job description: " + job_desc if job_desc else ""}
 
-    with st.spinner("🤖 Generating Suggestions..."):
-        progress = st.progress(0)
-        for i, obj in enumerate(st.session_state.objects[:MAX_SLIDES]):
-            text = obj['text']
-            objectId = obj['objectId']
-            full_prompt = f"""You are editing a CV. Here is a section of the slide:
-
----
-{text}
----
-
-Based on the job post: {job_url}
-And this additional input: {custom_prompt}
-
-Suggest an improved version of this text.
+CV JSON:
+{json.dumps(cv_data, indent=2)}
 """
-            try:
-                new_text = agent.run(full_prompt)
-            except Exception as e:
-                new_text = f"[Error generating text: {e}]"
 
-            preview.append({
-                "objectId": objectId,
-                "old": text,
-                "new": new_text
-            })
-
-            progress.progress((i + 1) / MAX_SLIDES)
-            time.sleep(THROTTLE_SECONDS)
-
-    st.session_state.preview = preview
-
-# Show preview
-if st.session_state.preview:
-    st.markdown("### 📝 Preview Changes")
-    for p in st.session_state.preview:
-        st.markdown(f"""**Before:**  
-{p['old']}
-
-**After:**  
-{p['new']}
----
-""")
-
-    if st.button("✅ Apply to Slides"):
-        apply_updates_to_slides(
-            PRESENTATION_ID,
-            [{"objectId": p["objectId"], "new_text": p["new"]} for p in st.session_state.preview]
-        )
-        st.success("Slides updated successfully.")
+        try:
+            new_cv = agent.run(full_prompt)
+            st.success("✅ CV JSON generated!")
+            st.code(new_cv, language="json")
+        except Exception as e:
+            st.error(f"Error generating CV: {e}")
