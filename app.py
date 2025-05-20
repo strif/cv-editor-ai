@@ -12,8 +12,8 @@ from bs4 import MarkupResemblesLocatorWarning
 
 warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
 
-st.set_page_config(page_title="AI CV JSON Optimizer", layout="wide")
-st.title("📄 AI-Powered JSON CV Optimizer")
+st.set_page_config(page_title="JobSherpa - AI CV Optimizer", layout="wide")
+st.title("📄 AI-Powered CV Optimizer")
 
 # CV data (your full JSON)
 cv_data = {
@@ -144,6 +144,11 @@ if job_url_input != st.session_state.get("job_desc", ""):
     st.session_state.job_desc = job_url_input
     st.session_state.job_description_text = extract_about_this_job_from_url(job_url_input)
     st.session_state.prompt = None
+
+# Show the extracted job description content in a text area for visibility
+st.subheader("Extracted Job Description Content")
+extracted_text = st.session_state.get("job_description_text", "")
+st.text_area("Content fetched from URL:", value=extracted_text, height=300, key="extracted_job_desc_display")
 
 def create_prompt(cv_json, job_description_text):
     return f"""
