@@ -132,9 +132,16 @@ CV JSON:
 # Initialize default prompt
 default_prompt = create_prompt(cv_data, job_desc)
 
-# Editable prompt input
+# Persist prompt with session state
+if "prompt" not in st.session_state:
+    st.session_state.prompt = default_prompt
+
 st.subheader("Edit the prompt to customize your CV optimization")
-prompt = st.text_area("Prompt:", value=default_prompt, height=400)
+prompt = st.text_area("Prompt:", value=st.session_state.prompt, height=400)
+
+# Update session state if prompt changes
+if prompt != st.session_state.prompt:
+    st.session_state.prompt = prompt
 
 # Function to count tokens for the prompt
 def count_tokens(text: str, model_name: str = "gpt-4o-mini") -> int:
@@ -153,7 +160,7 @@ def call_agent(prompt):
     return agent.run(prompt)
 
 if st.button("🚀 Optimize CV JSON"):
-    token_count = count_tokens(prompt)
+    token_count = count_tokens(st.session_state.prompt)
     st.info(f"📝 Prompt token count: **{token_count}**")
 
     max_tokens = 16385
@@ -162,7 +169,7 @@ if st.button("🚀 Optimize CV JSON"):
     else:
         with st.spinner("Calling LLM to optimize your CV JSON..."):
             try:
-                result = call_agent(prompt)
+                result = call_agent(st.session_state.prompt)
 
                 # Try to parse as JSON
                 try:
