@@ -1,8 +1,10 @@
 streamlit
-openai
 langchain
-langchain-community
-google-auth
-google-api-python-client
+openai
 tiktoken
-beautifulsoup4
+bs4
+requests
+tenacity
+google-api-python-client
+google-auth
+google-auth-oauthlib

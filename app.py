@@ -9,6 +9,9 @@ from bs4 import BeautifulSoup
 import requests
 import warnings
 from bs4 import MarkupResemblesLocatorWarning
+from googleapiclient.discovery import build
+from google.oauth2 import service_account
+import re
 
 warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
 
@@ -60,9 +63,8 @@ You are a career advisor and ResumeMasterGPT, an expert agent trained to generat
 
 Below is a user's CV in JSON format. Rewrite and enhance this CV based on the job description:
 
-
  Output Scope
-The main goal is to edit the contents of the existing cv (JSON) based on the job description and instructions given bellow:
+The main goal is to edit the contents of the existing cv (JSON) based on the job description and instructions given below:
 
 Content Preservation Principles
 (1) Resume content accuracy is absolute. Every bullet must faithfully reflect the user's validated experience.
@@ -79,7 +81,6 @@ It is better to slightly underuse a keyword than to misrepresent experience.
 Metric and Detail Preservation
 -Always preserve key metrics and impact figures in achievements and throughout the document  (e.g. increased sales by 15%)
 
-
 -the final resume version must be complete, standalone, and fully persuasive.
 -Never assume the reviewer has seen prior roles.
 -Always include full detail on responsibilities, metrics, and impact — even if similar themes exist across different sections.
@@ -89,7 +90,6 @@ Invention Ban
 Never invent roles, achievements, initiatives, projects, frameworks, partnerships, metrics, or results.
 Never attribute experience that does not exist in the source resume.
 Never create fictionalized enablement initiatives, AI integrations, or LMS deployments unless explicitly confirmed by the user.
-
 
 Phase 2 — Analysis
 (1)
@@ -108,8 +108,6 @@ Map relevant, existing resume experience that aligns directly with those scannin
 (3) Perform an ATS keyword analysis of the job description. Extract the most relevant and recurring keywords or phrases directly from the job post.
 Example output format:
  ATS Keyword Analysis (Job Description)
-
-
 
 3. Output:
 - in valid json format 
@@ -152,6 +150,45 @@ def call_agent(prompt):
     agent = get_conversational_agent(model_name="gpt-4.1")
     return agent.run(prompt)
 
+# Google Docs Integration
+def get_google_docs_service():
+    scopes = ['https://www.googleapis.com/auth/documents']
+    credentials = service_account.Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"], scopes=scopes)
+    service = build('docs', 'v1', credentials=credentials)
+    return service
+
+def extract_placeholders(document):
+    placeholders = set()
+    content = document.get('body').get('content')
+
+    for element in content:
+        if 'paragraph' in element:
+            elements = element['paragraph'].get('elements', [])
+            for elem in elements:
+                text_run = elem.get('textRun')
+                if text_run:
+                    text = text_run.get('content')
+                    matches = re.findall(r'{{(.*?)}}', text)
+                    placeholders.update(matches)
+    return placeholders
+
+def replace_placeholders(service, document_id, cv_data):
+    requests = []
+    for key, value in cv_data.items():
+        requests.append({
+            'replaceAllText': {
+                'containsText': {
+                    'text': f'{{{{{key}}}}}',
+                    'matchCase': True
+                },
+                'replaceText': value
+            }
+        })
+    result = service.documents().batchUpdate(
+        documentId=document_id, body={'requests': requests}).execute()
+    return result
+
 if st.button("🚀 Align CV"):
     token_count = count_tokens(st.session_state.prompt)
     st.info(f"📝 Prompt token count: **{token_count}**")
@@ -167,6 +204,18 @@ if st.button("🚀 Align CV"):
                     parsed = json.loads(result)
                     st.success("✅ Valid JSON returned!")
                     st.code(json.dumps(parsed, indent=2), language="json")
+
+                    # Google Docs Integration
+                    service = get_google_docs_service()
+                    DOCUMENT_ID = '1gjMpzdLazwSEetjz1mzVJkLVwsdRKs3zZnfM8qg4V74'
+                    document = service.documents().get(documentId=DOCUMENT_ID).execute()
+                    placeholders = extract_placeholders(document)
+
+                    # Map parsed JSON to placeholders
+                    cv_mapping = {key: parsed.get(key, '') for key in placeholders}
+                    replace_placeholders(service, DOCUMENT_ID, cv_mapping)
+                    st.success("✅ Google Doc updated successfully!")
+
                 except json.JSONDecodeError:
                     st.warning("⚠️ The result isn't valid JSON. Showing raw output:")
                     st.code(result)
