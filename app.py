@@ -143,13 +143,15 @@ def create_prompt(cv_json, job_description_text):
     return f"""
 You are an expert career advisor helping improve a JSON-based CV.
 
-Below is a user's CV in JSON format. Rewrite and enhance this CV:
-- Highlight key skills and achievements for leadership/product roles.
-- Tailor it towards modern tech/innovation/product environments.
+Below is a user's CV in JSON format. Rewrite and enhance this CV based on the job description:
+
 - Keep it in valid JSON structure.
+- Highlight key skills and achievements 
+- pick or add skills that are relevant to the industry and role
 - Prioritize clarity, brevity, and impact.
 - Do not omit important responsibilities unless redundant.
-- If a job description is provided, align it accordingly.
+- create a profile description that is suitable for the job description, e.g. add that the individual is looking for a role on the job descriptions sector.
+- create hobbies that are relevant to the job description
 
 {"Here is the job description: " + job_description_text if job_description_text else ""}
 
@@ -181,7 +183,7 @@ def call_agent(prompt):
     agent = get_conversational_agent(model_name="gpt-4o-32k")
     return agent.run(prompt)
 
-if st.button("🚀 Optimize CV JSON"):
+if st.button("🚀 Align CV"):
     token_count = count_tokens(st.session_state.prompt)
     st.info(f"📝 Prompt token count: **{token_count}**")
 
