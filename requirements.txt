@@ -5,3 +5,4 @@ langchain-community
 google-auth
 google-api-python-client
 tiktoken
+BeautifulSoup
