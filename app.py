@@ -84,7 +84,11 @@ if prompt != st.session_state.prompt:
     st.session_state.prompt = prompt
 
 def count_tokens(text: str, model_name: str = "gpt-4.1") -> int:
-    encoding = tiktoken.encoding_for_model(model_name)
+    try:
+        encoding = tiktoken.encoding_for_model(model_name)
+    except KeyError:
+        # Fallback to a default encoding if the model name is unrecognized
+        encoding = tiktoken.get_encoding("cl100k_base")
     tokens = encoding.encode(text)
     return len(tokens)
 
