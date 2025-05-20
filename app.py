@@ -149,6 +149,13 @@ def count_tokens(text: str, model_name: str = "gpt-4o-mini") -> int:
     tokens = encoding.encode(text)
     return len(tokens)
 
+# New function to get tokens decoded as strings for display
+def get_tokens(text: str, model_name: str = "gpt-4o-mini") -> list[str]:
+    encoding = tiktoken.encoding_for_model(model_name)
+    tokens = encoding.encode(text)
+    token_strings = [encoding.decode([t]) for t in tokens]
+    return token_strings
+
 # Retry logic for API calls
 @retry(
     wait=wait_random_exponential(min=2, max=10),
@@ -161,7 +168,12 @@ def call_agent(prompt):
 
 if st.button("🚀 Optimize CV JSON"):
     token_count = count_tokens(st.session_state.prompt)
+    tokens = get_tokens(st.session_state.prompt)
     st.info(f"📝 Prompt token count: **{token_count}**")
+
+    # Show actual tokens in an expandable section
+    with st.expander("Show tokens"):
+        st.write(tokens)
 
     max_tokens = 16385
     if token_count > max_tokens:
