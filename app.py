@@ -3,7 +3,8 @@ import json
 import time
 from llm_agent import get_conversational_agent
 from tenacity import retry, wait_random_exponential, stop_after_attempt, retry_if_exception_type
-from openai.error import RateLimitError
+from openai._exceptions import RateLimitError
+
 
 st.set_page_config(page_title="AI CV JSON Optimizer", layout="wide")
 st.title("📄 AI-Powered JSON CV Optimizer")
