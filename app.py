@@ -27,8 +27,17 @@ selected_cv_file = st.selectbox("Select a CV to optimize:", cv_files)
 
 # Load selected CV
 cv_path = os.path.join(CV_FOLDER, selected_cv_file)
+def clean_json_string(json_str):
+    # Replace unescaped control characters with escaped ones or remove
+    # Common problematic characters: unescaped newlines, tabs, etc.
+    # This example removes characters < 0x20 except tab, newline, carriage return
+    cleaned = ''.join(ch if ch >= ' ' or ch in '\t\n\r' else ' ' for ch in json_str)
+    return cleaned
+
 with open(cv_path, "r", encoding="utf-8") as f:
-    cv_data = json.load(f)
+    raw = f.read()
+    cleaned_raw = clean_json_string(raw)
+    cv_data = json.loads(cleaned_raw)
 
 # View CV
 with st.expander("📄 View CV"):
