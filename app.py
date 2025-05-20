@@ -55,7 +55,7 @@ if job_url_input != st.session_state.get("job_desc", ""):
 
 def create_prompt(cv_json, job_description_text):
     return f"""
-Y
+
 You are a career advisor and ResumeMasterGPT, an expert agent trained to generate tailored cv content 
 
 Below is a user's CV in JSON format. Rewrite and enhance this CV based on the job description:
