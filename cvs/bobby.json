@@ -1,0 +1,129 @@
+{
+  "name": "Robert Vaillancourt",
+  "title": "Growth and Operations Consultant",
+  "contact": {
+    "phone": "+44 7577323034",
+    "email": "robert.d.vaillancourt@gmail.com",
+    "linkedin": "https://www.linkedin.com/in/robertvaillancourt",
+    "location": "London, UK",
+    "visa_sponsorship_needed": false
+  },
+  "summary": "Strategic technology executive and Salesforce Solutions Architect with 15 years of experience leading digital transformation across medium to large-scale enterprises in SaaS, public sector, and mission-driven organizations. Proven success in delivering and scaling post-acquisition solutions totaling $1.9B in enterprise value, while driving $3M+ in consulting revenue and supporting $1M+ in presales solutioning. Adept at aligning Salesforce, ERP, SAP, and data platforms with business strategy, managing high-performing cross-functional teams, and driving operational excellence.",
+  "skills": [
+    "Strategic Leadership",
+    "Governance Oversight",
+    "Compliance Management",
+    "Financial Planning",
+    "Budget Management",
+    "Operational Efficiency",
+    "Business Process Improvement",
+    "Cross-Functional Team Leadership",
+    "Technology Strategy",
+    "Data Strategy",
+    "Risk Management",
+    "Cybersecurity Readiness",
+    "Stakeholder Engagement",
+    "Talent Management",
+    "Diversity and Inclusion",
+    "Project Management",
+    "Change Management",
+    "Procurement",
+    "Contract Negotiations",
+    "Performance Measurement",
+    "KPI Development",
+    "Business Planning",
+    "Forecasting",
+    "Enterprise Systems Oversight"
+  ],
+  "experience": [
+    {
+      "title": "Solutions Architect | Business Operations Consultant",
+      "company": "Opfocus",
+      "location": "London, UK (Remote)",
+      "start_date": "09/2019",
+      "end_date": "Present",
+      "summary": "Led end-to-end Salesforce project delivery, managed teams, led solution architecture, and streamlined operations for over 40 projects.",
+      "key_achievements": [
+        "Consolidated Salesforce tech stack post-$1.9B acquisition for SaaS client, driving $570M+ revenue growth.",
+        "Led multi-system Salesforce integrations, unlocking $23.9M in revenue."
+      ]
+    },
+    {
+      "title": "Chief Operating Officer | Co-Founder",
+      "company": "CFB Strategies",
+      "location": "New York, USA",
+      "start_date": "01/2009",
+      "end_date": "09/2019",
+      "summary": "Architected and launched Salesforce-based PoICRM, drove cross-functional leadership, formed key partnerships, and expanded internationally.",
+      "key_achievements": [
+        "Scaled platform to 4,000+ users and $1M+ ARR.",
+        "Supported $100M+ in fundraising and 1.3M+ transactions.",
+        "Earned 4 national Pollie Awards."
+      ]
+    },
+    {
+      "title": "Deputy District Director",
+      "company": "United States House of Representatives",
+      "location": "New York, USA",
+      "start_date": "05/2006",
+      "end_date": "01/2009",
+      "summary": "Executed policy objectives, strengthened advocacy and media engagement.",
+      "key_achievements": [
+        "Secured $5.5M in emergency FEMA assistance post-disaster declaration."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "institution": "Saïd Business School, University of Oxford",
+      "degree": "Executive MBA"
+    },
+    {
+      "institution": "Fordham University",
+      "degree": "Baccalaureate in Political Science"
+    }
+  ],
+  "certifications": [
+    {
+      "name": "Salesforce Administrator",
+      "issuer": "Salesforce.com"
+    }
+  ],
+  "advisory_roles": [
+    {
+      "title": "Board Member",
+      "organization": "Bountip Technologies",
+      "location": "London, UK",
+      "start_date": "2023",
+      "end_date": "Present",
+      "summary": "Helped generate $250K+ in early revenue and drove market adoption across 29 clients."
+    },
+    {
+      "title": "Board Advisor",
+      "organization": "CYCLE Kids",
+      "location": "Boston, USA",
+      "start_date": "08/2019",
+      "end_date": "12/2024",
+      "summary": "Enabled Salesforce-driven operations, growing program impact to 35K+ children and helping raise $5M+ in funding."
+    }
+  ],
+  "awards": [
+    "Four Gold Pollie Awards",
+    "Best Use of New Technology",
+    "Best Overall Fundraising Campaign",
+    "Best Use of Email",
+    "Best Use of Social Media"
+  ],
+  "publications": [
+    {
+      "title": "5 Ways Aspiring Tech Entrepreneurs Can Manage Their Workload",
+      "publisher": "CBS News",
+      "url": "https://elvr.short.gy/robert"
+    },
+    {
+      "title": "Grassroots Fundraising",
+      "publisher": "Digital Politics",
+      "url": "https://elvr.short.gy/Robert_Interview"
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 import streamlit as st
 import json
+import os
 from llm_agent import get_conversational_agent
 from tenacity import retry, wait_random_exponential, stop_after_attempt, retry_if_exception_type
 from openai._exceptions import RateLimitError
@@ -14,109 +15,27 @@ warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
 st.set_page_config(page_title="JobSherpa - AI CV Optimizer", layout="wide")
 st.title("📄 AI-Powered CV Optimizer")
 
-# CV data (your full JSON)
-cv_data = {
-  "personal_info": {
-    "name": "Kostas Voudouris",
-    "headline": "Product | Marketing | Innovation",
-    "contact": {
-      "address": "58 Elvendon Road, London, United Kingdom",
-      "phone": "07530525525",
-      "email": "kostantinosv@gmail.com"
-    },
-    "nationality": "British / Greek",
-    "linkedin_profile": "",
-    "profile_description": (
-      "Dedicated to driving product innovation and improving performance metrics "
-      "through extensive leadership experience. Passionate about using technology "
-      "to deliver impactful solutions that fuel growth in fast-paced environments. "
-      "Eager to contribute to a visionary team shaping the future of digital marketing "
-      "and product development."
-    ),
-    "hobbies": "",
-    "skills": [
-      "Team Management",
-      "Early Stage Innovation & AI",
-      "Product Management",
-      "Python",
-      "Google Cloud",
-      "AWS",
-      "Ad Platforms"
-    ]
-  },
-  "employment_history": [
-    {
-      "company": "Choreograph",
-      "title": "SVP, Product (Commerce)",
-      "from": "July 2024",
-      "to": "Present",
-      "location": "London",
-      "responsibilities_or_achievements": [
-        "Leads a 30-person multidisciplinary team spanning product, engineering, data science, UX, and analytics.",
-        "Drives the global vision and strategy for commerce products, aligning cross-functional stakeholders and resources around a unified portfolio.",
-        "Oversees budgeting, prioritization, and execution of high-impact initiatives across the commerce ecosystem."
-      ]
-    },
-    {
-      "company": "EssenceMediacom",
-      "title": "VP of Product Innovation",
-      "from": "November 2022",
-      "to": "May 2024",
-      "location": "",
-      "responsibilities_or_achievements": [
-        "Executed innovation frameworks, translating vision into high-impact products.",
-        "Prioritized business challenges, driving transformative AI-driven solutions. Led GenAI cohorts, offering training on LLMs and AI best practices.",
-        "Formed and directed cross-functional teams, delivering iterative Proof of Concepts, MVPs, and successful product launches."
-      ]
-    },
-    {
-      "company": "Essence",
-      "title": "Business Owner - OCTRA (Product)",
-      "from": "May 2020",
-      "to": "June 2024",
-      "location": "",
-      "responsibilities_or_achievements": [
-        "Pioneered OCTRA, a GroupM-level USP used by 80+ global clients.",
-        "Led a 45-person team across product, engineering, design, QA, and customer success.",
-        "Oversaw pricing strategy, forecasting, and revenue reporting, while establishing feedback loops to keep the roadmap aligned with client needs."
-      ]
-    },
-    {
-      "company": "Essence Global",
-      "title": "Global Head of Media Technology",
-      "from": "January 2018",
-      "to": "June 2024",
-      "location": "London",
-      "responsibilities_or_achievements": [
-        "Led a global team of 15, building advanced software to tackle complex media challenges.",
-        "Acted as a key technology stakeholder, shaping strategic decisions and the tech vision.",
-        "Mentored internal talent, providing hands-on training in agile development."
-      ]
-    },
-    {
-      "company": "Maxus - Essence Global",
-      "title": "Head of Organic & Content Performance",
-      "from": "November 2011",
-      "to": "December 2017",
-      "location": "London",
-      "responsibilities_or_achievements": [
-        "Responsible for the P&L of a 20-member team introducing new services at global scale.",
-        "Services included SEO, Conversion Rate Optimization, and Performance Content.",
-        "Led recruiting, pitching, onboarding, and servicing clients including Apple, Burberry & UPS."
-      ]
-    }
-  ],
-  "education": [
-    {
-      "degree": "Computer Science and AI",
-      "university": "City, University of London",
-      "from": "January 2008",
-      "to": "January 2011",
-      "notes": "Graduated with a First Class Degree"
-    }
-  ]
+# === Load CV JSON files from local 'cvs' folder ===
+CV_FOLDER = "cvs"
+cv_files = {
+    os.path.splitext(file)[0].replace("_", " ").title(): os.path.join(CV_FOLDER, file)
+    for file in os.listdir(CV_FOLDER) if file.endswith(".json")
 }
 
+# Dropdown to select a CV
+st.subheader("Select a CV to Optimize")
+selected_cv_name = st.selectbox("Candidate", options=list(cv_files.keys()))
+cv_path = cv_files[selected_cv_name]
+
+# Load selected CV JSON
+with open(cv_path, "r", encoding="utf-8") as f:
+    cv_data = json.load(f)
+
+# Show CV JSON (expandable)
+with st.expander(f"📄 View CV JSON for {selected_cv_name}"):
+    st.code(json.dumps(cv_data, indent=2), language="json")
+
+# === Job Description Input ===
 def extract_about_this_job_from_url(url: str) -> str:
     try:
         resp = requests.get(url)
@@ -131,7 +50,6 @@ def extract_about_this_job_from_url(url: str) -> str:
         return f"Error fetching or parsing job description: {e}"
 
 st.subheader("Job Role URL to Tailor For")
-
 job_url_input = st.text_area("Paste the LinkedIn job description URL:", value=st.session_state.get("job_desc", ""))
 
 if job_url_input != st.session_state.get("job_desc", ""):
@@ -139,6 +57,7 @@ if job_url_input != st.session_state.get("job_desc", ""):
     st.session_state.job_description_text = extract_about_this_job_from_url(job_url_input)
     st.session_state.prompt = None
 
+# === Prompt Creation ===
 def create_prompt(cv_json, job_description_text):
     return f"""
 You are an expert career advisor helping improve a JSON-based CV.
@@ -147,11 +66,11 @@ Below is a user's CV in JSON format. Rewrite and enhance this CV based on the jo
 
 - Keep it in valid JSON structure.
 - Highlight key skills and achievements 
-- pick or add skills that are relevant to the industry and role
+- Pick or add skills that are relevant to the industry and role
 - Prioritize clarity, brevity, and impact.
 - Do not omit important responsibilities unless redundant.
-- create a profile description that is suitable for the job description, e.g. add that the individual is looking for a role on the job descriptions sector.
-- create hobbies that are relevant to the job description
+- Create a profile description that is suitable for the job description, e.g. add that the individual is looking for a role in the job description's sector.
+- Create hobbies that are relevant to the job description
 
 {"Here is the job description: " + job_description_text if job_description_text else ""}
 
@@ -169,11 +88,13 @@ prompt = st.text_area("Prompt:", value=st.session_state.prompt, height=400)
 if prompt != st.session_state.prompt:
     st.session_state.prompt = prompt
 
+# === Token Counting ===
 def count_tokens(text: str, model_name: str = "gpt-4o-32k") -> int:
     encoding = tiktoken.encoding_for_model(model_name)
     tokens = encoding.encode(text)
     return len(tokens)
 
+# === LLM Call with Retry ===
 @retry(
     wait=wait_random_exponential(min=2, max=10),
     stop=stop_after_attempt(5),
@@ -183,6 +104,7 @@ def call_agent(prompt):
     agent = get_conversational_agent(model_name="gpt-4o-32k")
     return agent.run(prompt)
 
+# === Run Optimization ===
 if st.button("🚀 Align CV"):
     token_count = count_tokens(st.session_state.prompt)
     st.info(f"📝 Prompt token count: **{token_count}**")
