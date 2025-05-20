@@ -91,4 +91,86 @@
     {
       "role": "Head of Organic & Content Performance",
       "company": "Maxus - Essence Global",
-      "location": "
+      "location": "London",
+      "dates": "November 2011 - December 2017",
+      "Clients": "NBCU, Nando's, UPS, BT, L'Oréal, Poloniex, Peloton, SkyTeam",
+      "summary": "Managed P&L of a 20-person team launching global SEO, CRO, and content performance programs. Drove expansion of new service lines. Successfully pitched, onboarded, and managed major global clients such as Apple and Burberry."
+    },
+    {
+      "role": "Organic Search Director",
+      "company": "Catalyst, a WPP Agency",
+      "location": "Greater New York City Area",
+      "dates": "March 2015 - March 2016",
+      "Clients": "GE, KFC, Castrol, Bayer",
+      "summary": "Managed enterprise accounts with a focus on online reputation, dynamic content, retail SEO, and app store optimization. Delivered measurable performance uplifts through strategic consulting and technical SEO delivery."
+    },
+    {
+      "role": "SEO Director",
+      "company": "Maxus",
+      "location": "London",
+      "dates": "November 2012 - March 2015",
+      "Clients": "Apple",
+      "summary": "Owned global SEO strategy for Apple e-commerce. Led a team across EMEA, NA, and APAC to deliver scalable and automated SEO tooling. Authored BRDs and worked closely with engineering teams to address complex platform issues."
+    },
+    {
+      "role": "SEO Manager",
+      "company": "Maxus",
+      "location": "London",
+      "dates": "November 2011 - November 2012",
+      "Clients": "Mercedes-Benz UK, Barclays.com",
+      "summary": "Managed organic strategy for Daimler UK and key financial clients. Performed deep audits, analytics reviews, and strategic planning using Adobe SiteCatalyst. Successfully launched SEO support for new vehicle models."
+    },
+    {
+      "role": "SEO Consultant",
+      "company": "Mavens of London",
+      "location": "London",
+      "dates": "April 2011 - November 2011",
+      "Clients": "Unilever, Citroën",
+      "summary": "Conducted data-driven strategy development using programmatic data collection and custom tooling. Delivered actionable insights across branding, content, and SEO strategy."
+    },
+    {
+      "role": "Consultant",
+      "company": "J O Hambro",
+      "location": "London",
+      "dates": "September 2010 - November 2010",
+      "summary": "Designed and implemented an internal company-wide wiki to streamline access to infrastructure knowledge and documentation."
+    }
+  ],
+  "education": [
+    {
+      "institution": "City, University of London",
+      "degree": "BSc Computer Science with Distributed Systems",
+      "dates": "January 2008 - December 2011",
+      "grade": "First Class Degree"
+    }
+  ],
+  "certifications": [
+    {
+      "name": "Google Analytics IQ",
+      "issuer": "Google"
+    },
+    {
+      "name": "Professional Cloud Architect",
+      "issuer": "Google Cloud (GCP)"
+    }
+  ],
+  "advisory_roles": [
+    {
+      "title": "Product Advisor",
+      "organization": "Biteluxe",
+      "location": "London Area",
+      "start_date": "October 2024",
+      "end_date": "Present",
+      "summary": "Advised on go-to-market and product development strategy for a growth-stage AI firm. Helped define positioning and product roadmap while integrating LLMs into client offerings."
+    }
+  ],
+  "awards": [],
+  "publications": [
+    {
+      "title": "How to Ace the Google Mobile-Friendly Test & Score 100%",
+      "source": "Moz.com",
+      "date": "April 2015",
+      "summary": "Breakdown of mobile-friendliness signals and optimization tools."
+    }
+  ]
+}
