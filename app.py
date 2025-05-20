@@ -158,6 +158,13 @@ def get_google_docs_service():
     service = build('docs', 'v1', credentials=credentials)
     return service
 
+def get_drive_service():
+    scopes = ['https://www.googleapis.com/auth/drive']
+    credentials = service_account.Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"], scopes=scopes)
+    drive_service = build('drive', 'v3', credentials=credentials)
+    return drive_service
+
 def extract_placeholders(document):
     placeholders = set()
     content = document.get('body').get('content')
@@ -206,10 +213,10 @@ if st.button("🚀 Align CV"):
                     st.code(json.dumps(parsed, indent=2), language="json")
 
                     # Google Docs integration
-                    service = get_google_docs_service()
+                    docs_service = get_google_docs_service()
+                    drive_service = get_drive_service()
 
                     # Step 1: Copy the template doc to create a new doc
-                    drive_service = build('drive', 'v3', credentials=service._http.credentials)
                     TEMPLATE_DOC_ID = '1gjMpzdLazwSEetjz1mzVJkLVwsdRKs3zZnfM8qg4V74'
                     new_doc = drive_service.files().copy(
                         fileId=TEMPLATE_DOC_ID,
@@ -217,12 +224,18 @@ if st.button("🚀 Align CV"):
                     ).execute()
 
                     new_doc_id = new_doc['id']
-                    document = service.documents().get(documentId=new_doc_id).execute()
+                    document = docs_service.documents().get(documentId=new_doc_id).execute()
                     placeholders = extract_placeholders(document)
 
                     # Step 2: Map parsed JSON keys to placeholders and replace
                     cv_mapping = {key: parsed.get(key, '') for key in placeholders}
-                    replace_placeholders(service, new_doc_id, cv_mapping)
+                    replace_placeholders(docs_service, new_doc_id, cv_mapping)
 
                     st.success("✅ New Google Doc created and updated successfully!")
-                    st.markdown(f"🔗 [View Your Tailored CV](https
+                    st.markdown(f"🔗 [View Your Tailored CV](https://docs.google.com/document/d/{new_doc_id}/edit)", unsafe_allow_html=True)
+
+                except json.JSONDecodeError:
+                    st.warning("⚠️ The result isn't valid JSON. Showing raw output:")
+                    st.code(result)
+            except Exception as e:
+                st.error(f"❌ Error from LLM: {e}")
