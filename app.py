@@ -142,11 +142,6 @@ if job_url_input != st.session_state.get("job_desc", ""):
     st.session_state.job_description_text = extract_about_this_job_from_url(job_url_input)
     st.session_state.prompt = None
 
-# Show the extracted job description content in a text area for visibility
-st.subheader("Extracted Job Description Content")
-extracted_text = st.session_state.get("job_description_text", "")
-st.text_area("Content fetched from URL:", value=extracted_text, height=300, key="extracted_job_desc_display")
-
 def create_prompt(cv_json, job_description_text):
     return f"""
 You are an expert career advisor helping improve a JSON-based CV.
@@ -180,12 +175,6 @@ def count_tokens(text: str, model_name: str = "gpt-4o-mini") -> int:
     tokens = encoding.encode(text)
     return len(tokens)
 
-def get_tokens(text: str, model_name: str = "gpt-4o-mini") -> list[str]:
-    encoding = tiktoken.encoding_for_model(model_name)
-    tokens = encoding.encode(text)
-    token_strings = [encoding.decode([t]) for t in tokens]
-    return token_strings
-
 @retry(
     wait=wait_random_exponential(min=2, max=10),
     stop=stop_after_attempt(5),
@@ -197,17 +186,19 @@ def call_agent(prompt):
 
 if st.button("🚀 Optimize CV JSON"):
     token_count = count_tokens(st.session_state.prompt)
-    tokens = get_tokens(st.session_state.prompt)
     st.info(f"📝 Prompt token count: **{token_count}**")
-
-    with st.expander("Show tokens"):
-        st.write(tokens)
 
     max_tokens = 16385
     if token_count > max_tokens:
         st.error(f"❌ Your prompt is too long by {token_count - max_tokens} tokens. Please shorten the CV or job description or prompt.")
     else:
         with st.spinner("Calling LLM to optimize your CV JSON..."):
+            # Display job description content here while processing
+            job_desc_content = st.session_state.get("job_description_text", "")
+            if job_desc_content:
+                st.markdown("### Job Description Content")
+                st.write(job_desc_content)
+
             try:
                 result = call_agent(st.session_state.prompt)
                 try:
