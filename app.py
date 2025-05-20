@@ -5,6 +5,7 @@ from llm_agent import get_conversational_agent
 from tenacity import retry, wait_random_exponential, stop_after_attempt, retry_if_exception_type
 from openai._exceptions import RateLimitError
 import tiktoken
+from bs4 import BeautifulSoup
 
 st.set_page_config(page_title="AI CV JSON Optimizer", layout="wide")
 st.title("📄 AI-Powered JSON CV Optimizer")
@@ -106,11 +107,34 @@ cv_data = {
   ]
 }
 
-# Input: Optional job description
+# Helper function: Extract "About this job" section from LinkedIn job page HTML (if HTML given)
+def extract_about_this_job(text_or_html: str) -> str:
+    try:
+        soup = BeautifulSoup(text_or_html, 'html.parser')
+        # Look for header "About this job" (case insensitive)
+        header = soup.find(lambda tag: tag.name in ['h2', 'h3'] and 'about this job' in tag.get_text(strip=True).lower())
+        if not header:
+            return text_or_html.strip()  # Not HTML or no header found, return original
+        # The section content usually follows the header, may be inside a sibling div or container
+        # Try to grab next siblings until next header or end
+        content_parts = []
+        for sibling in header.find_next_siblings():
+            if sibling.name and sibling.name.startswith('h'):
+                break  # stop at next header
+            content_parts.append(sibling.get_text(separator='\n', strip=True))
+        extracted = "\n".join(p for p in content_parts if p)
+        return extracted if extracted else text_or_html.strip()
+    except Exception:
+        # On any parsing error, fallback to original text
+        return text_or_html.strip()
+
+# Input: Optional job description or LinkedIn job HTML snippet
 st.subheader("Optional Job Role to Tailor For")
 
-# Load job_desc from session state or default empty string
-job_desc = st.text_area("Paste the job description or target role (optional):", value=st.session_state.get("job_desc", ""))
+job_desc_input = st.text_area("Paste the job description or target role (optional):", value=st.session_state.get("job_desc", ""))
+
+# Extract only the About This Job section if applicable
+job_desc = extract_about_this_job(job_desc_input)
 
 # Update session state and prompt dynamically when job_desc changes
 if job_desc != st.session_state.get("job_desc", ""):
