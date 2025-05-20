@@ -108,7 +108,14 @@ cv_data = {
 
 # Input: Optional job description
 st.subheader("Optional Job Role to Tailor For")
-job_desc = st.text_area("Paste the job description or target role (optional):")
+
+# Load job_desc from session state or default empty string
+job_desc = st.text_area("Paste the job description or target role (optional):", value=st.session_state.get("job_desc", ""))
+
+# Update session state and prompt dynamically when job_desc changes
+if job_desc != st.session_state.get("job_desc", ""):
+    st.session_state.job_desc = job_desc
+    st.session_state.prompt = None  # Reset prompt so it rebuilds below
 
 # Function to create the prompt string
 def create_prompt(cv_json, job_description):
@@ -129,17 +136,14 @@ CV JSON:
 {json.dumps(cv_json, indent=2)}
 """
 
-# Initialize default prompt
-default_prompt = create_prompt(cv_data, job_desc)
-
-# Persist prompt with session state
-if "prompt" not in st.session_state:
-    st.session_state.prompt = default_prompt
+# Build prompt if not already in session state
+if "prompt" not in st.session_state or st.session_state.prompt is None:
+    st.session_state.prompt = create_prompt(cv_data, st.session_state.get("job_desc", ""))
 
 st.subheader("Edit the prompt to customize your CV optimization")
 prompt = st.text_area("Prompt:", value=st.session_state.prompt, height=400)
 
-# Update session state if prompt changes
+# Update session state if user edits the prompt manually
 if prompt != st.session_state.prompt:
     st.session_state.prompt = prompt
 
