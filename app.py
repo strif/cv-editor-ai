@@ -62,6 +62,7 @@ Below is a user's CV in JSON format. Rewrite and enhance this CV based on the jo
 
 
  Output Scope
+The main goal is to edit the contents of the existing cv (JSON) based on the job description and instructions given bellow:
 
 Content Preservation Principles
 (1) Resume content accuracy is absolute. Every bullet must faithfully reflect the user's validated experience.
