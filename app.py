@@ -110,6 +110,31 @@ cv_data = {
 st.subheader("Optional Job Role to Tailor For")
 job_desc = st.text_area("Paste the job description or target role (optional):")
 
+# Default prompt template with placeholders
+default_prompt = """
+You are an expert career advisor helping improve a JSON-based CV.
+
+Below is a user's CV in JSON format. Rewrite and enhance this CV:
+- Highlight key skills and achievements for leadership/product roles.
+- Tailor it towards modern tech/innovation/product environments.
+- Keep it in valid JSON structure.
+- Prioritize clarity, brevity, and impact.
+- Do not omit important responsibilities unless redundant.
+- If a job description is provided, align it accordingly.
+
+{job_description_section}
+
+CV JSON:
+{cv_json}
+"""
+
+# Editable prompt template UI
+prompt_template = st.text_area(
+    "Edit the prompt template (use {job_description_section} and {cv_json} for placeholders):",
+    value=default_prompt,
+    height=300,
+)
+
 # Retry logic for API calls
 @retry(
     wait=wait_random_exponential(min=2, max=10),
@@ -123,23 +148,15 @@ def call_agent(prompt):
 # Optimize button
 if st.button("🚀 Optimize CV JSON"):
     with st.spinner("Calling LLM to optimize your CV JSON..."):
+        # Prepare dynamic sections
+        job_description_section = f"Here is the job description: {job_desc}" if job_desc else ""
+        cv_json = json.dumps(cv_data, indent=2)
 
-        prompt = f"""
-You are an expert career advisor helping improve a JSON-based CV.
-
-Below is a user's CV in JSON format. Rewrite and enhance this CV:
-- Highlight key skills and achievements for leadership/product roles.
-- Tailor it towards modern tech/innovation/product environments.
-- Keep it in valid JSON structure.
-- Prioritize clarity, brevity, and impact.
-- Do not omit important responsibilities unless redundant.
-- If a job description is provided, align it accordingly.
-
-{"Here is the job description: " + job_desc if job_desc else ""}
-
-CV JSON:
-{json.dumps(cv_data, indent=2)}
-"""
+        # Fill prompt template placeholders safely
+        prompt = prompt_template.format(
+            job_description_section=job_description_section,
+            cv_json=cv_json
+        )
 
         try:
             result = call_agent(prompt)
