@@ -185,7 +185,7 @@ if st.button("🚀 Optimize CV JSON"):
     token_count = count_tokens(st.session_state.prompt)
     st.info(f"📝 Prompt token count: **{token_count}**")
 
-    max_tokens = 16385
+    max_tokens = 30000
     if token_count > max_tokens:
         st.error(f"❌ Your prompt is too long by {token_count - max_tokens} tokens. Please shorten the CV or job description or prompt.")
     else:
