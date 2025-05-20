@@ -1,11 +1,14 @@
 import streamlit as st
 import json
+import time
 from llm_agent import get_conversational_agent
+from tenacity import retry, wait_random_exponential, stop_after_attempt, retry_if_exception_type
+from openai.error import RateLimitError
 
 st.set_page_config(page_title="AI CV JSON Optimizer", layout="wide")
 st.title("📄 AI-Powered JSON CV Optimizer")
 
-# Load static CV JSON (you can load from file or input later)
+# CV data (hardcoded for now)
 cv_data = {
   "personal_info": {
     "name": "Kostas Voudouris",
@@ -102,16 +105,25 @@ cv_data = {
   ]
 }
 
-# UI Inputs
+# Input: Optional job description
 st.subheader("Optional Job Role to Tailor For")
 job_desc = st.text_area("Paste the job description or target role (optional):")
 
-# Run
+# Retry logic for API calls
+@retry(
+    wait=wait_random_exponential(min=2, max=10),
+    stop=stop_after_attempt(5),
+    retry=retry_if_exception_type(RateLimitError),
+)
+def call_agent(prompt):
+    agent = get_conversational_agent()
+    return agent.run(prompt)
+
+# Optimize button
 if st.button("🚀 Optimize CV JSON"):
     with st.spinner("Calling LLM to optimize your CV JSON..."):
-        agent = get_conversational_agent()
 
-        full_prompt = f"""
+        prompt = f"""
 You are an expert career advisor helping improve a JSON-based CV.
 
 Below is a user's CV in JSON format. Rewrite and enhance this CV:
@@ -129,8 +141,16 @@ CV JSON:
 """
 
         try:
-            new_cv = agent.run(full_prompt)
-            st.success("✅ CV JSON generated!")
-            st.code(new_cv, language="json")
+            result = call_agent(prompt)
+
+            # Try to parse as JSON
+            try:
+                parsed = json.loads(result)
+                st.success("✅ Valid JSON returned!")
+                st.code(json.dumps(parsed, indent=2), language="json")
+            except json.JSONDecodeError:
+                st.warning("⚠️ The result isn't valid JSON. Showing raw output:")
+                st.code(result)
+
         except Exception as e:
-            st.error(f"Error generating CV: {e}")
+            st.error(f"❌ Error from LLM: {e}")
