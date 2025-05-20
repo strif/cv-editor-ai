@@ -1,95 +1,94 @@
 {
-  "personal_info": {
-    "name": "Kostas Voudouris",
-    "headline": "Product | Marketing | Innovation",
-    "contact": {
-      "address": "58 Elvendon Road, London, United Kingdom",
-      "phone": "07530525525",
-      "email": "kostantinosv@gmail.com"
-    },
-    "nationality": "British / Greek",
-    "linkedin_profile": "",
-    "profile_description": "Dedicated to driving product innovation and improving performance metrics through extensive leadership experience. Passionate about using technology to deliver impactful solutions that fuel growth in fast-paced environments. Eager to contribute to a visionary team shaping the future of digital marketing and product development.",
-    "hobbies": "",
-    "skills": [
-      "Team Management",
-      "Early Stage Innovation & AI",
-      "Product Management",
-      "Python",
-      "Google Cloud",
-      "AWS",
-      "Ad Platforms"
-    ]
+  "name": "Kostas Voudouris",
+  "title": "SVP, Product (Commerce)",
+  "contact": {
+    "address": "58 Elvendon Road, London, England, United Kingdom",
+    "alternate_address": "Thessaloniki, Greece, 57300",
+    "phone": "07530525525",
+    "alternate_phone": "6949 857 080",
+    "email": "kostantinosv@gmail.com",
+    "linkedin": "https://www.linkedin.com/in/kostasvoudouris/",
+    "nationality": "British / Greek"
   },
-  "employment_history": [
-    {
-      "company": "Choreograph",
-      "title": "SVP, Product (Commerce)",
-      "from": "July 2024",
-      "to": "Present",
-      "location": "London",
-      "responsibilities_or_achievements": [
-        "Leads a 30-person multidisciplinary team spanning product, engineering, data science, UX, and analytics.",
-        "Drives the global vision and strategy for commerce products, aligning cross-functional stakeholders and resources around a unified portfolio.",
-        "Oversees budgeting, prioritization, and execution of high-impact initiatives across the commerce ecosystem."
-      ]
-    },
-    {
-      "company": "EssenceMediacom",
-      "title": "VP of Product Innovation",
-      "from": "November 2022",
-      "to": "May 2024",
-      "location": "",
-      "responsibilities_or_achievements": [
-        "Executed innovation frameworks, translating vision into high-impact products.",
-        "Prioritized business challenges, driving transformative AI-driven solutions. Led GenAI cohorts, offering training on LLMs and AI best practices.",
-        "Formed and directed cross-functional teams, delivering iterative Proof of Concepts, MVPs, and successful product launches."
-      ]
-    },
-    {
-      "company": "Essence",
-      "title": "Business Owner - OCTRA (Product)",
-      "from": "May 2020",
-      "to": "June 2024",
-      "location": "",
-      "responsibilities_or_achievements": [
-        "Pioneered OCTRA, a GroupM-level USP used by 80+ global clients.",
-        "Led a 45-person team across product, engineering, design, QA, and customer success.",
-        "Oversaw pricing strategy, forecasting, and revenue reporting, while establishing feedback loops to keep the roadmap aligned with client needs."
-      ]
-    },
-    {
-      "company": "Essence Global",
-      "title": "Global Head of Media Technology",
-      "from": "January 2018",
-      "to": "June 2024",
-      "location": "London",
-      "responsibilities_or_achievements": [
-        "Led a global team of 15, building advanced software to tackle complex media challenges.",
-        "Acted as a key technology stakeholder, shaping strategic decisions and the tech vision.",
-        "Mentored internal talent, providing hands-on training in agile development."
-      ]
-    },
-    {
-      "company": "Maxus - Essence Global",
-      "title": "Head of Organic & Content Performance",
-      "from": "November 2011",
-      "to": "December 2017",
-      "location": "London",
-      "responsibilities_or_achievements": [
-        "Responsible for the P&L of a 20-member team introducing new services at global scale.",
-        "Services included SEO, Conversion Rate Optimization, and Performance Content.",
-        "Led recruiting, pitching, onboarding, and servicing clients including Apple, Burberry & UPS."
-      ]
-    }
+  "summary": "Dedicated to driving product innovation and improving performance metrics through extensive leadership experience. Passionate about using technology to deliver impactful solutions that fuel growth in fast-paced environments.",
+  "skills": [
+    "Team Leadership",
+    "AI Innovation",
+    "Product Strategy",
+    "Python",
+    "Cloud Infrastructure",
+    "Ad Platforms",
+    "Digital Marketing",
+    "UX Design",
+    "Data Science",
+    "Project Delivery",
+    "Stakeholder Management",
+    "Business Growth",
+    "Cross-functional Teams",
+    "Enterprise Systems",
+    "Data Platforms",
+    "Tech Strategy",
+    "Salesforce",
+    "Operational Excellence",
+    "Presales Solutioning",
+    "KPI Development",
+    "AWS/GCP",
+    "React",
+    "Angular",
+    "SEO",
+    "Paid Search",
+    "Social Media",
+    "Advertising",
+    "Branding",
+    "Model Training",
+    "Programmatic Ads",
+    "AI Agents",
+    "Analytics",
+    "Reinforcement Learning",
+    "Technical SEO",
+    "Conversion Optimization",
+    "Content Strategy",
+    "Customer Success",
+    "Go-to-Market",
+    "Innovation Management",
+    "LLMs",
+    "ASO",
+    "Web Analytics",
+    "BRD Writing",
+    "Media Tech"
   ],
-  "education": [
+  "experience": [
     {
-      "degree": "Computer Science and AI",
-      "university": "City, University of London",
-      "from": "January 2008",
-      "to": "January 2011",
-      "notes": "Graduated with a First Class Degree"
-    }
-  ]
-}
+      "role": "SVP, Product (Commerce)",
+      "company": "Choreograph",
+      "location": "London Area",
+      "dates": "July 2024 - Present",
+      "Clients": "The Coca-Cola Company, Colgate-Palmolive, Mars, Nestle, Unilever",
+      "summary": "Lead a 30-person multidisciplinary team across product, engineering, data science, UX, and analytics. Define and execute global vision and strategy for commerce products, aligning cross-functional stakeholders. Manage high-value budgets, prioritization processes, and execution of global initiatives focused on measurable outcomes across the commerce ecosystem."
+    },
+    {
+      "role": "VP of Product Innovation",
+      "company": "EssenceMediacom",
+      "dates": "November 2022 - May 2024",
+      "Clients": "Amazon",
+      "summary": "Executed product innovation strategy using AI and LLMs. Ran GenAI training programs and innovation cohorts. Directed cross-functional teams to develop PoCs and MVPs. Enabled faster product cycles and brought transformative AI solutions to market."
+    },
+    {
+      "role": "Business Owner - OCTRA (Product)",
+      "company": "Essence",
+      "dates": "May 2020 - June 2024",
+      "Clients": "Amazon, Adidas, Airbnb, Church & Dwight, Colgate-Palmolive, The Coca-Cola Company",
+      "summary": "Pioneered OCTRA, a GroupM-level USP adopted by 80+ global clients. Directed a 45-person team covering product, engineering, design, QA, and customer success. Owned pricing, forecasting, and customer feedback loops to continuously evolve the roadmap."
+    },
+    {
+      "role": "Global Head of Media Technology",
+      "company": "Essence Global",
+      "location": "London",
+      "dates": "January 2018 - June 2024",
+      "Clients": "Google, NBCU, BT, L'Oréal",
+      "summary": "Led a global media technology team delivering prototypes and production tools to solve complex media challenges. Acted as key tech stakeholder influencing long-term strategic planning. Founded an internal Technical University that upskilled talent across disciplines into contextual developers."
+    },
+    {
+      "role": "Head of Organic & Content Performance",
+      "company": "Maxus - Essence Global",
+      "location": "
