@@ -6,11 +6,16 @@ from tenacity import retry, wait_random_exponential, stop_after_attempt, retry_i
 from openai._exceptions import RateLimitError
 import tiktoken
 from bs4 import BeautifulSoup
+import requests
+import warnings
+from bs4 import MarkupResemblesLocatorWarning
+
+warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
 
 st.set_page_config(page_title="AI CV JSON Optimizer", layout="wide")
 st.title("📄 AI-Powered JSON CV Optimizer")
 
-# CV data (hardcoded for now)
+# CV data (your full JSON)
 cv_data = {
   "personal_info": {
     "name": "Kostas Voudouris",
@@ -22,7 +27,13 @@ cv_data = {
     },
     "nationality": "British / Greek",
     "linkedin_profile": "",
-    "profile_description": "Dedicated to driving product innovation and improving performance metrics through extensive leadership experience. Passionate about using technology to deliver impactful solutions that fuel growth in fast-paced environments. Eager to contribute to a visionary team shaping the future of digital marketing and product development.",
+    "profile_description": (
+      "Dedicated to driving product innovation and improving performance metrics "
+      "through extensive leadership experience. Passionate about using technology "
+      "to deliver impactful solutions that fuel growth in fast-paced environments. "
+      "Eager to contribute to a visionary team shaping the future of digital marketing "
+      "and product development."
+    ),
     "hobbies": "",
     "skills": [
       "Team Management",
@@ -107,42 +118,34 @@ cv_data = {
   ]
 }
 
-# Helper function: Extract "About this job" section from LinkedIn job page HTML (if HTML given)
-def extract_about_this_job(text_or_html: str) -> str:
+def extract_about_this_job_from_url(url: str) -> str:
     try:
-        soup = BeautifulSoup(text_or_html, 'html.parser')
-        # Look for header "About this job" (case insensitive)
+        resp = requests.get(url)
+        resp.raise_for_status()
+        soup = BeautifulSoup(resp.text, 'html.parser')
         header = soup.find(lambda tag: tag.name in ['h2', 'h3'] and 'about this job' in tag.get_text(strip=True).lower())
         if not header:
-            return text_or_html.strip()  # Not HTML or no header found, return original
-        # The section content usually follows the header, may be inside a sibling div or container
-        # Try to grab next siblings until next header or end
+            return resp.text.strip()
         content_parts = []
         for sibling in header.find_next_siblings():
             if sibling.name and sibling.name.startswith('h'):
-                break  # stop at next header
+                break
             content_parts.append(sibling.get_text(separator='\n', strip=True))
         extracted = "\n".join(p for p in content_parts if p)
-        return extracted if extracted else text_or_html.strip()
-    except Exception:
-        # On any parsing error, fallback to original text
-        return text_or_html.strip()
+        return extracted if extracted else resp.text.strip()
+    except Exception as e:
+        return f"Error fetching or parsing job description: {e}"
 
-# Input: Optional job description or LinkedIn job HTML snippet
-st.subheader("Optional Job Role to Tailor For")
+st.subheader("Job Role URL to Tailor For")
 
-job_desc_input = st.text_area("Paste the job description or target role (optional):", value=st.session_state.get("job_desc", ""))
+job_url_input = st.text_area("Paste the LinkedIn job description URL:", value=st.session_state.get("job_desc", ""))
 
-# Extract only the About This Job section if applicable
-job_desc = extract_about_this_job(job_desc_input)
+if job_url_input != st.session_state.get("job_desc", ""):
+    st.session_state.job_desc = job_url_input
+    st.session_state.job_description_text = extract_about_this_job_from_url(job_url_input)
+    st.session_state.prompt = None
 
-# Update session state and prompt dynamically when job_desc changes
-if job_desc != st.session_state.get("job_desc", ""):
-    st.session_state.job_desc = job_desc
-    st.session_state.prompt = None  # Reset prompt so it rebuilds below
-
-# Function to create the prompt string
-def create_prompt(cv_json, job_description):
+def create_prompt(cv_json, job_description_text):
     return f"""
 You are an expert career advisor helping improve a JSON-based CV.
 
@@ -154,37 +157,33 @@ Below is a user's CV in JSON format. Rewrite and enhance this CV:
 - Do not omit important responsibilities unless redundant.
 - If a job description is provided, align it accordingly.
 
-{"Here is the job description: " + job_description if job_description else ""}
+{"Here is the job description: " + job_description_text if job_description_text else ""}
 
 CV JSON:
 {json.dumps(cv_json, indent=2)}
 """
 
-# Build prompt if not already in session state
 if "prompt" not in st.session_state or st.session_state.prompt is None:
-    st.session_state.prompt = create_prompt(cv_data, st.session_state.get("job_desc", ""))
+    job_description_text = st.session_state.get("job_description_text", "")
+    st.session_state.prompt = create_prompt(cv_data, job_description_text)
 
 st.subheader("Edit the prompt to customize your CV optimization")
 prompt = st.text_area("Prompt:", value=st.session_state.prompt, height=400)
 
-# Update session state if user edits the prompt manually
 if prompt != st.session_state.prompt:
     st.session_state.prompt = prompt
 
-# Function to count tokens for the prompt
 def count_tokens(text: str, model_name: str = "gpt-4o-mini") -> int:
     encoding = tiktoken.encoding_for_model(model_name)
     tokens = encoding.encode(text)
     return len(tokens)
 
-# New function to get tokens decoded as strings for display
 def get_tokens(text: str, model_name: str = "gpt-4o-mini") -> list[str]:
     encoding = tiktoken.encoding_for_model(model_name)
     tokens = encoding.encode(text)
     token_strings = [encoding.decode([t]) for t in tokens]
     return token_strings
 
-# Retry logic for API calls
 @retry(
     wait=wait_random_exponential(min=2, max=10),
     stop=stop_after_attempt(5),
@@ -199,7 +198,6 @@ if st.button("🚀 Optimize CV JSON"):
     tokens = get_tokens(st.session_state.prompt)
     st.info(f"📝 Prompt token count: **{token_count}**")
 
-    # Show actual tokens in an expandable section
     with st.expander("Show tokens"):
         st.write(tokens)
 
@@ -210,8 +208,6 @@ if st.button("🚀 Optimize CV JSON"):
         with st.spinner("Calling LLM to optimize your CV JSON..."):
             try:
                 result = call_agent(st.session_state.prompt)
-
-                # Try to parse as JSON
                 try:
                     parsed = json.loads(result)
                     st.success("✅ Valid JSON returned!")
@@ -219,6 +215,5 @@ if st.button("🚀 Optimize CV JSON"):
                 except json.JSONDecodeError:
                     st.warning("⚠️ The result isn't valid JSON. Showing raw output:")
                     st.code(result)
-
             except Exception as e:
                 st.error(f"❌ Error from LLM: {e}")
