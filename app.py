@@ -123,16 +123,13 @@ def extract_about_this_job_from_url(url: str) -> str:
         resp = requests.get(url)
         resp.raise_for_status()
         soup = BeautifulSoup(resp.text, 'html.parser')
-        header = soup.find(lambda tag: tag.name in ['h2', 'h3'] and 'about this job' in tag.get_text(strip=True).lower())
-        if not header:
+        # Extract text only within the div with the specific class
+        description_div = soup.find('div', class_='description__text description__text--rich')
+        if description_div:
+            return description_div.get_text(separator='\n', strip=True)
+        else:
+            # fallback: if div not found, return full page text
             return resp.text.strip()
-        content_parts = []
-        for sibling in header.find_next_siblings():
-            if sibling.name and sibling.name.startswith('h'):
-                break
-            content_parts.append(sibling.get_text(separator='\n', strip=True))
-        extracted = "\n".join(p for p in content_parts if p)
-        return extracted if extracted else resp.text.strip()
     except Exception as e:
         return f"Error fetching or parsing job description: {e}"
 
