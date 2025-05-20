@@ -205,19 +205,24 @@ if st.button("🚀 Align CV"):
                     st.success("✅ Valid JSON returned!")
                     st.code(json.dumps(parsed, indent=2), language="json")
 
-                    # Google Docs Integration
+                    # Google Docs integration
                     service = get_google_docs_service()
-                    DOCUMENT_ID = '1gjMpzdLazwSEetjz1mzVJkLVwsdRKs3zZnfM8qg4V74'
-                    document = service.documents().get(documentId=DOCUMENT_ID).execute()
+
+                    # Step 1: Copy the template doc to create a new doc
+                    drive_service = build('drive', 'v3', credentials=service._http.credentials)
+                    TEMPLATE_DOC_ID = '1gjMpzdLazwSEetjz1mzVJkLVwsdRKs3zZnfM8qg4V74'
+                    new_doc = drive_service.files().copy(
+                        fileId=TEMPLATE_DOC_ID,
+                        body={"name": f"Tailored CV - {selected_cv_file}"}
+                    ).execute()
+
+                    new_doc_id = new_doc['id']
+                    document = service.documents().get(documentId=new_doc_id).execute()
                     placeholders = extract_placeholders(document)
 
-                    # Map parsed JSON to placeholders
+                    # Step 2: Map parsed JSON keys to placeholders and replace
                     cv_mapping = {key: parsed.get(key, '') for key in placeholders}
-                    replace_placeholders(service, DOCUMENT_ID, cv_mapping)
-                    st.success("✅ Google Doc updated successfully!")
+                    replace_placeholders(service, new_doc_id, cv_mapping)
 
-                except json.JSONDecodeError:
-                    st.warning("⚠️ The result isn't valid JSON. Showing raw output:")
-                    st.code(result)
-            except Exception as e:
-                st.error(f"❌ Error from LLM: {e}")
+                    st.success("✅ New Google Doc created and updated successfully!")
+                    st.markdown(f"🔗 [View Your Tailored CV](https
