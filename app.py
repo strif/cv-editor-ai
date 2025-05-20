@@ -1,6 +1,5 @@
 import streamlit as st
 import json
-import time
 from llm_agent import get_conversational_agent
 from tenacity import retry, wait_random_exponential, stop_after_attempt, retry_if_exception_type
 from openai._exceptions import RateLimitError
@@ -123,12 +122,10 @@ def extract_about_this_job_from_url(url: str) -> str:
         resp = requests.get(url)
         resp.raise_for_status()
         soup = BeautifulSoup(resp.text, 'html.parser')
-        # Extract text only within the div with the specific class
         description_div = soup.find('div', class_='description__text description__text--rich')
         if description_div:
             return description_div.get_text(separator='\n', strip=True)
         else:
-            # fallback: if div not found, return full page text
             return resp.text.strip()
     except Exception as e:
         return f"Error fetching or parsing job description: {e}"
@@ -193,12 +190,6 @@ if st.button("🚀 Optimize CV JSON"):
         st.error(f"❌ Your prompt is too long by {token_count - max_tokens} tokens. Please shorten the CV or job description or prompt.")
     else:
         with st.spinner("Calling LLM to optimize your CV JSON..."):
-            # Display job description content here while processing
-            job_desc_content = st.session_state.get("job_description_text", "")
-            if job_desc_content:
-                st.markdown("### Job Description Content")
-                st.write(job_desc_content)
-
             try:
                 result = call_agent(st.session_state.prompt)
                 try:
