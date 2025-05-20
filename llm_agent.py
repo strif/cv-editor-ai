@@ -4,7 +4,7 @@ from langchain.chains import ConversationChain
 from langchain.memory import ConversationBufferMemory
 
 @st.cache_resource
-def get_conversational_agent():
+def get_conversational_agent(model_name="gpt-4o-mini"):
     api_key = st.secrets["openai"]["api_key"]
     llm = ChatOpenAI(openai_api_key=api_key, temperature=0.7)
     memory = ConversationBufferMemory()
