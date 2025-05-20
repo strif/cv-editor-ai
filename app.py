@@ -4,7 +4,7 @@ import time
 from llm_agent import get_conversational_agent
 from tenacity import retry, wait_random_exponential, stop_after_attempt, retry_if_exception_type
 from openai._exceptions import RateLimitError
-
+import tiktoken
 
 st.set_page_config(page_title="AI CV JSON Optimizer", layout="wide")
 st.title("📄 AI-Powered JSON CV Optimizer")
@@ -110,30 +110,11 @@ cv_data = {
 st.subheader("Optional Job Role to Tailor For")
 job_desc = st.text_area("Paste the job description or target role (optional):")
 
-# Default prompt template with placeholders
-default_prompt = """
-You are an expert career advisor helping improve a JSON-based CV.
-
-Below is a user's CV in JSON format. Rewrite and enhance this CV:
-- Highlight key skills and achievements for leadership/product roles.
-- Tailor it towards modern tech/innovation/product environments.
-- Keep it in valid JSON structure.
-- Prioritize clarity, brevity, and impact.
-- Do not omit important responsibilities unless redundant.
-- If a job description is provided, align it accordingly.
-
-{job_description_section}
-
-CV JSON:
-{cv_json}
-"""
-
-# Editable prompt template UI
-prompt_template = st.text_area(
-    "Edit the prompt template (use {job_description_section} and {cv_json} for placeholders):",
-    value=default_prompt,
-    height=300,
-)
+# Function to count tokens for the prompt
+def count_tokens(text: str, model_name: str = "gpt-4o-mini") -> int:
+    encoding = tiktoken.encoding_for_model(model_name)
+    tokens = encoding.encode(text)
+    return len(tokens)
 
 # Retry logic for API calls
 @retry(
@@ -145,30 +126,48 @@ def call_agent(prompt):
     agent = get_conversational_agent()
     return agent.run(prompt)
 
+# Compose the prompt (extract to a function for easy editing if you want)
+def create_prompt(cv_json, job_description):
+    return f"""
+You are an expert career advisor helping improve a JSON-based CV.
+
+Below is a user's CV in JSON format. Rewrite and enhance this CV:
+- Highlight key skills and achievements for leadership/product roles.
+- Tailor it towards modern tech/innovation/product environments.
+- Keep it in valid JSON structure.
+- Prioritize clarity, brevity, and impact.
+- Do not omit important responsibilities unless redundant.
+- If a job description is provided, align it accordingly.
+
+{"Here is the job description: " + job_description if job_description else ""}
+
+CV JSON:
+{json.dumps(cv_json, indent=2)}
+"""
+
 # Optimize button
 if st.button("🚀 Optimize CV JSON"):
-    with st.spinner("Calling LLM to optimize your CV JSON..."):
-        # Prepare dynamic sections
-        job_description_section = f"Here is the job description: {job_desc}" if job_desc else ""
-        cv_json = json.dumps(cv_data, indent=2)
+    prompt = create_prompt(cv_data, job_desc)
+    token_count = count_tokens(prompt)
+    st.info(f"📝 Prompt token count: **{token_count}**")
 
-        # Fill prompt template placeholders safely
-        prompt = prompt_template.format(
-            job_description_section=job_description_section,
-            cv_json=cv_json
-        )
-
-        try:
-            result = call_agent(prompt)
-
-            # Try to parse as JSON
+    # Warn if token count too high for GPT-4o-mini (16,385 tokens max)
+    max_tokens = 16385
+    if token_count > max_tokens:
+        st.error(f"❌ Your prompt is too long by {token_count - max_tokens} tokens. Please shorten the CV or job description.")
+    else:
+        with st.spinner("Calling LLM to optimize your CV JSON..."):
             try:
-                parsed = json.loads(result)
-                st.success("✅ Valid JSON returned!")
-                st.code(json.dumps(parsed, indent=2), language="json")
-            except json.JSONDecodeError:
-                st.warning("⚠️ The result isn't valid JSON. Showing raw output:")
-                st.code(result)
+                result = call_agent(prompt)
 
-        except Exception as e:
-            st.error(f"❌ Error from LLM: {e}")
+                # Try to parse as JSON
+                try:
+                    parsed = json.loads(result)
+                    st.success("✅ Valid JSON returned!")
+                    st.code(json.dumps(parsed, indent=2), language="json")
+                except json.JSONDecodeError:
+                    st.warning("⚠️ The result isn't valid JSON. Showing raw output:")
+                    st.code(result)
+
+            except Exception as e:
+                st.error(f"❌ Error from LLM: {e}")
