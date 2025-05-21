@@ -18,15 +18,11 @@ warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
 st.set_page_config(page_title="JobSherpa - AI CV Optimizer", layout="wide")
 st.title("📄 AI-Powered CV Optimizer")
 
-# Load available CVs from 'cvs' directory
 CV_FOLDER = "cvs"
 cv_files = [f for f in os.listdir(CV_FOLDER) if f.endswith(".json")]
-
-# Dropdown to select CV
 selected_cv_file = st.selectbox("Select a CV to optimize:", cv_files)
-
-# Load selected CV
 cv_path = os.path.join(CV_FOLDER, selected_cv_file)
+
 def clean_json_string(json_str):
     cleaned = ''.join(ch if ch >= ' ' or ch in '\t\n\r' else ' ' for ch in json_str)
     return cleaned
@@ -36,11 +32,9 @@ with open(cv_path, "r", encoding="utf-8") as f:
     cleaned_raw = clean_json_string(raw)
     cv_data = json.loads(cleaned_raw)
 
-# View CV
 with st.expander("📄 View CV"):
     st.code(json.dumps(cv_data, indent=2), language="json")
 
-# Job URL input
 st.subheader("Job Role URL to Tailor For")
 job_url_input = st.text_area("Paste the LinkedIn job description URL:", value=st.session_state.get("job_desc", ""))
 
@@ -154,7 +148,6 @@ def call_agent(prompt):
     agent = get_conversational_agent(model_name="gpt-4-turbo")
     return agent.run(prompt)
 
-# Google Docs Integration
 def get_google_docs_service():
     scopes = ['https://www.googleapis.com/auth/documents']
     credentials = service_account.Credentials.from_service_account_info(
@@ -200,8 +193,58 @@ def replace_placeholders(service, document_id, cv_data):
         documentId=document_id, body={'requests': requests}).execute()
     return result
 
+def create_placeholder_filling_prompt(placeholders, cv_json, job_description_text):
+    placeholder_list = ", ".join(sorted(placeholders))
+    prompt = f"""
+You are ResumeMasterGPT, an expert career advisor.
+
+You will be given a set of placeholder names that appear in a Google Docs CV template.
+
+Your task is to generate a JSON object where each key exactly matches one of the placeholders below:
+
+Placeholders:
+{placeholder_list}
+
+Use the user's existing CV (provided below) and the Job Description to fill each placeholder with tailored, truthful, and complete content. Follow these rules:
+
+- Do not invent or omit any experience.
+- Do not fabricate any metrics or results.
+- Use UK English spelling.
+- Optimize wording to align with the job description but keep facts accurate.
+- If a placeholder does not apply, set its value to an empty string.
+
+User's CV JSON:
+{json.dumps(cv_json, indent=2)}
+
+Job Description:
+{job_description_text if job_description_text else "N/A"}
+
+Return your output as valid JSON only.
+"""
+    return prompt
+
 if st.button("🚀 Align CV"):
-    token_count = count_tokens(st.session_state.prompt)
+
+    docs_service = get_google_docs_service()
+    drive_service = get_drive_service()
+
+    TEMPLATE_DOC_ID = '1gjMpzdLazwSEetjz1mzVJkLVwsdRKs3zZnfM8qg4V74'
+    # Copy template doc first to get a new editable doc ID
+    new_doc = drive_service.files().copy(
+        fileId=TEMPLATE_DOC_ID,
+        body={"name": f"Tailored CV - {selected_cv_file}"}
+    ).execute()
+    new_doc_id = new_doc['id']
+
+    # Fetch document content from copied doc to extract placeholders dynamically
+    document = docs_service.documents().get(documentId=new_doc_id).execute()
+    placeholders = extract_placeholders(document)
+
+    # Create a dynamic prompt that instructs LLM to fill all placeholders exactly
+    job_description_text = st.session_state.get("job_description_text", "")
+    dynamic_prompt = create_placeholder_filling_prompt(placeholders, cv_data, job_description_text)
+
+    token_count = count_tokens(dynamic_prompt)
     st.info(f"📝 Prompt token count: **{token_count}**")
 
     max_tokens = 40000
@@ -210,25 +253,14 @@ if st.button("🚀 Align CV"):
     else:
         with st.spinner("Calling LLM to optimize your CV JSON..."):
             try:
-                result = call_agent(st.session_state.prompt)
+                # Use dynamic prompt instead of editable one to ensure placeholders match
+                result = call_agent(dynamic_prompt)
                 try:
                     parsed = json.loads(result)
                     st.success("✅ Valid JSON returned!")
                     st.code(json.dumps(parsed, indent=2), language="json")
 
-                    docs_service = get_google_docs_service()
-                    drive_service = get_drive_service()
-
-                    TEMPLATE_DOC_ID = '1gjMpzdLazwSEetjz1mzVJkLVwsdRKs3zZnfM8qg4V74'
-                    new_doc = drive_service.files().copy(
-                        fileId=TEMPLATE_DOC_ID,
-                        body={"name": f"Tailored CV - {selected_cv_file}"}
-                    ).execute()
-
-                    new_doc_id = new_doc['id']
-                    document = docs_service.documents().get(documentId=new_doc_id).execute()
-                    placeholders = extract_placeholders(document)
-
+                    # Map LLM output keys to placeholders and replace in Google Doc
                     cv_mapping = {key: parsed.get(key, '') for key in placeholders}
                     replace_placeholders(docs_service, new_doc_id, cv_mapping)
 
