@@ -169,6 +169,19 @@ def get_drive_service():
     drive_service = build('drive', 'v3', credentials=credentials)
     return drive_service
 
+# New function added: share document with your email
+def share_document_with_email(drive_service, file_id, user_email):
+    permission = {
+        'type': 'user',
+        'role': 'writer',  # or 'reader' for view-only
+        'emailAddress': user_email
+    }
+    drive_service.permissions().create(
+        fileId=file_id,
+        body=permission,
+        fields='id'
+    ).execute()
+
 def extract_placeholders(document):
     placeholders = set()
     content = document.get('body').get('content')
@@ -231,6 +244,11 @@ if st.button("🚀 Align CV"):
                     ).execute()
 
                     new_doc_id = new_doc['id']
+
+                    # Share the new document with your email so you can access it:
+                    your_email = "kostantinosv@gmail.com"  # <-- Replace with your actual email here!
+                    share_document_with_email(drive_service, new_doc_id, your_email)
+
                     document = docs_service.documents().get(documentId=new_doc_id).execute()
                     placeholders = extract_placeholders(document)
 
@@ -241,7 +259,7 @@ if st.button("🚀 Align CV"):
                     cv_mapping = {key: parsed.get(key, '') for key in placeholders}
                     replace_placeholders(docs_service, new_doc_id, cv_mapping)
 
-                    st.success("✅ New Google Doc created and updated successfully!")
+                    st.success("✅ New Google Doc created, shared, and updated successfully!")
                     st.markdown(f"🔗 [View Your Tailored CV](https://docs.google.com/document/d/{new_doc_id}/edit)", unsafe_allow_html=True)
 
                 except json.JSONDecodeError:
