@@ -12,6 +12,8 @@ from bs4 import MarkupResemblesLocatorWarning
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 import re
+from datetime import datetime
+
 
 warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
 
@@ -238,7 +240,26 @@ def replace_placeholders(service, document_id, cv_data):
 
 if st.button("🚀 Align CV"):
     token_count = count_tokens(st.session_state.prompt)
-    st.info(f"📝 Prompt token count: **{token_count}**")
+
+    job_desc_token_count = count_tokens(st.session_state.get("job_description_text", ""))
+    cv_json_token_count = count_tokens(json.dumps(cv_data, indent=2))
+    prompt_instructions_token_count = token_count - job_desc_token_count - cv_json_token_count
+
+    # Display detailed token diagnostics
+with st.sidebar.expander("🧠 Debug Info", expanded=False):
+    st.write("### Token Count Breakdown")
+    st.write(f"📄 Prompt Total: `{token_count}`")
+    st.write(f"📜 Job Description: `{job_desc_token_count}`")
+    st.write(f"🧾 CV JSON: `{cv_json_token_count}`")
+    st.write(f"📘 Prompt Instructions: `{prompt_instructions_token_count}`")
+    st.write("### Timestamp")
+    st.write(datetime.utcnow().isoformat() + " UTC")
+
+    st.write("### Prompt Preview")
+    st.code(st.session_state.prompt[:1000] + "\n...[truncated]...", language="text")
+
+    st.write("### CV JSON Preview")
+    st.code(json.dumps(cv_data, indent=2)[:1000] + "\n...[truncated]...", language="json")
 
     max_tokens = 40000
     if token_count > max_tokens:
