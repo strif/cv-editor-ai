@@ -149,7 +149,7 @@ if "prompt" not in st.session_state or st.session_state.prompt is None:
     job_description_text = st.session_state.get("job_description_text", "")
     document = docs_service.documents().get(documentId=TEMPLATE_DOC_ID).execute()
     placeholders = extract_placeholders(document)
-    st.session_state.prompt = create_prompt(cv_data, st.session_state.job_description_text, list(placeholders)
+    st.session_state.prompt = create_prompt(cv_data, st.session_state.job_description_text, list(placeholders))
 
 st.subheader("Edit the prompt to customize your CV optimization")
 prompt = st.text_area("Prompt:", value=st.session_state.prompt, height=400)
