@@ -137,7 +137,7 @@ prompt = st.text_area("Prompt:", value=st.session_state.prompt, height=400)
 if prompt != st.session_state.prompt:
     st.session_state.prompt = prompt
 
-def count_tokens(text: str, model_name: str = "gpt-4.1") -> int:
+def count_tokens(text: str, model_name: str = "gpt-4-turbo") -> int:
     try:
         encoding = tiktoken.encoding_for_model(model_name)
     except KeyError:
@@ -151,7 +151,7 @@ def count_tokens(text: str, model_name: str = "gpt-4.1") -> int:
     retry=retry_if_exception_type(RateLimitError),
 )
 def call_agent(prompt):
-    agent = get_conversational_agent(model_name="gpt-4.1")
+    agent = get_conversational_agent(model_name="gpt-4-turbo")
     return agent.run(prompt)
 
 # Google Docs Integration
