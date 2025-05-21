@@ -28,9 +28,12 @@ selected_cv_file = st.selectbox("Select a CV to optimize:", cv_files)
 
 # Load selected CV
 cv_path = os.path.join(CV_FOLDER, selected_cv_file)
+
+
 def clean_json_string(json_str):
     cleaned = ''.join(ch if ch >= ' ' or ch in '\t\n\r' else ' ' for ch in json_str)
     return cleaned
+
 
 with open(cv_path, "r", encoding="utf-8") as f:
     raw = f.read()
@@ -45,6 +48,7 @@ with st.expander("📄 View CV"):
 st.subheader("Job Role URL to Tailor For")
 job_url_input = st.text_area("Paste the LinkedIn job description URL:", value=st.session_state.get("job_desc", ""))
 
+
 def extract_about_this_job_from_url(url: str) -> str:
     try:
         resp = requests.get(url)
@@ -58,10 +62,12 @@ def extract_about_this_job_from_url(url: str) -> str:
     except Exception as e:
         return f"Error fetching or parsing job description: {e}"
 
+
 if job_url_input != st.session_state.get("job_desc", ""):
     st.session_state.job_desc = job_url_input
     st.session_state.job_description_text = extract_about_this_job_from_url(job_url_input)
     st.session_state.prompt = None
+
 
 def get_google_docs_service():
     scopes = ['https://www.googleapis.com/auth/documents']
@@ -70,12 +76,14 @@ def get_google_docs_service():
     service = build('docs', 'v1', credentials=credentials)
     return service
 
+
 def get_drive_service():
     scopes = ['https://www.googleapis.com/auth/drive']
     credentials = service_account.Credentials.from_service_account_info(
         st.secrets["gcp_service_account"], scopes=scopes)
     drive_service = build('drive', 'v3', credentials=credentials)
     return drive_service
+
 
 def share_document_with_email(drive_service, file_id, user_email):
     permission = {
@@ -88,6 +96,7 @@ def share_document_with_email(drive_service, file_id, user_email):
         body=permission,
         fields='id'
     ).execute()
+
 
 def extract_placeholders(document):
     placeholders = set()
@@ -102,6 +111,7 @@ def extract_placeholders(document):
                     matches = re.findall(r'{{(.*?)}}', text)
                     placeholders.update(matches)
     return placeholders
+
 
 def replace_placeholders(service, document_id, cv_data):
     requests = []
@@ -122,6 +132,7 @@ def replace_placeholders(service, document_id, cv_data):
     result = service.documents().batchUpdate(
         documentId=document_id, body={'requests': requests}).execute()
     return result
+
 
 def create_prompt(cv_json, job_description_text, placeholders_list):
     placeholders_str = ", ".join(placeholders_list)
@@ -199,6 +210,7 @@ CV JSON:
 {json.dumps(cv_json, indent=2)}
 """
 
+
 def count_tokens(text: str, model_name: str = "gpt-4-turbo") -> int:
     try:
         encoding = tiktoken.encoding_for_model(model_name)
@@ -206,6 +218,7 @@ def count_tokens(text: str, model_name: str = "gpt-4-turbo") -> int:
         encoding = tiktoken.get_encoding("cl100k_base")
     tokens = encoding.encode(text)
     return len(tokens)
+
 
 @retry(
     wait=wait_random_exponential(min=5, max=60),
@@ -215,6 +228,7 @@ def count_tokens(text: str, model_name: str = "gpt-4-turbo") -> int:
 def call_agent(prompt):
     agent = get_conversational_agent(model_name="gpt-4-turbo")
     return agent.run(prompt)
+
 
 if "prompt" not in st.session_state or st.session_state.prompt is None:
     job_description_text = st.session_state.get("job_description_text", "")
@@ -231,14 +245,15 @@ if prompt != st.session_state.prompt:
     st.session_state.prompt = prompt
 
 if st.button("🚀 Align CV"):
-    st.session_state.token_count = count_tokens(st.session_state.prompt)
+    token_count = count_tokens(st.session_state.prompt)
+    st.session_state.token_count = token_count
     st.session_state.job_desc_token_count = count_tokens(st.session_state.get("job_description_text", ""))
     st.session_state.cv_json_token_count = count_tokens(json.dumps(cv_data, indent=2))
     st.session_state.prompt_instructions_token_count = (
-    st.session_state.token_count 
-    - st.session_state.job_desc_token_count 
-    - st.session_state.cv_json_token_count
-)
+        st.session_state.token_count
+        - st.session_state.job_desc_token_count
+        - st.session_state.cv_json_token_count
+    )
 
     max_tokens = 40000
     if token_count > max_tokens:
@@ -291,7 +306,6 @@ token_count = st.session_state.get("token_count", 0)
 job_desc_token_count = st.session_state.get("job_desc_token_count", 0)
 cv_json_token_count = st.session_state.get("cv_json_token_count", 0)
 prompt_instructions_token_count = st.session_state.get("prompt_instructions_token_count", 0)
-
 
 with st.sidebar.expander("🧠 Debug Info", expanded=False):
     st.write("### Token Count Breakdown")
