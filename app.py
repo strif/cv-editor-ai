@@ -146,8 +146,8 @@ def count_tokens(text: str, model_name: str = "gpt-4.1") -> int:
     return len(tokens)
 
 @retry(
-    wait=wait_random_exponential(min=2, max=20),
-    stop=stop_after_attempt(8),
+    wait=wait_random_exponential(min=5, max=60),
+    stop=stop_after_attempt(3),
     retry=retry_if_exception_type(RateLimitError),
 )
 def call_agent(prompt):
