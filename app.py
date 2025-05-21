@@ -168,12 +168,8 @@ Identify 4–6 top attributes, responsibilities, or signals that appear repeated
 (2) Perform Resume Strength Mapping:
 Map user's existing real experience directly to each scanning priority.
 
-What You Already Bring to the Table:
-Map relevant, existing resume experience that aligns directly with those scanning points.
-
 (3) Perform an ATS keyword analysis of the job description. Extract the most relevant and recurring keywords or phrases directly from the job post.
-The target Google Docs template contains the following placeholders that need to be filled e.g. {{ full_name }} or {{ short_description_1 }}
-
+The target Google Docs template contains placeholders that need to be filled e.g. {{ full_name }} or {{ short_description_1 }}
 Your task now is to produce a JSON object where each key matches exactly one of the placeholders from the cv template, and the corresponding value is the tailored text content to replace that placeholder in the document.
 If you cannot fill a placeholder with relevant content from the CV or job description, set its value to an empty string.
 The output JSON should contain only these keys (no extras) and no additional commentary, emojis, or formatting.
@@ -183,6 +179,7 @@ The output JSON should contain only these keys (no extras) and no additional com
 {"Here is the job description: " + job_description_text if job_description_text else ""}
 
 CV JSON:
+
 {json.dumps(cv_json, indent=2)}
 """
 
