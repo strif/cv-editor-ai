@@ -16,7 +16,7 @@ import re
 warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
 
 st.set_page_config(page_title="JobSherpa - AI CV Optimizer", layout="wide")
-st.title("📄 AI-Powered CV Optimizer")
+st.title("\ud83d\udcc4 AI-Powered CV Optimizer")
 
 # Load available CVs from 'cvs' directory
 CV_FOLDER = "cvs"
@@ -28,9 +28,6 @@ selected_cv_file = st.selectbox("Select a CV to optimize:", cv_files)
 # Load selected CV
 cv_path = os.path.join(CV_FOLDER, selected_cv_file)
 def clean_json_string(json_str):
-    # Replace unescaped control characters with escaped ones or remove
-    # Common problematic characters: unescaped newlines, tabs, etc.
-    # This example removes characters < 0x20 except tab, newline, carriage return
     cleaned = ''.join(ch if ch >= ' ' or ch in '\t\n\r' else ' ' for ch in json_str)
     return cleaned
 
@@ -40,7 +37,7 @@ with open(cv_path, "r", encoding="utf-8") as f:
     cv_data = json.loads(cleaned_raw)
 
 # View CV
-with st.expander("📄 View CV"):
+with st.expander("\ud83d\udcc4 View CV"):
     st.code(json.dumps(cv_data, indent=2), language="json")
 
 # Job URL input
@@ -144,8 +141,7 @@ def count_tokens(text: str, model_name: str = "gpt-4.1") -> int:
     try:
         encoding = tiktoken.encoding_for_model(model_name)
     except KeyError:
-        # Fallback to a default encoding if the model name is unrecognized
-        encoding = tiktoken.get_encoding("cl100k_base")  # Common fallback encoding
+        encoding = tiktoken.get_encoding("cl100k_base")
     tokens = encoding.encode(text)
     return len(tokens)
 
@@ -155,11 +151,9 @@ def count_tokens(text: str, model_name: str = "gpt-4.1") -> int:
     retry=retry_if_exception_type(RateLimitError),
 )
 def call_agent(prompt):
-    # Use GPT-4.1 model with extended context
     agent = get_conversational_agent(model_name="gpt-4.1")
     return agent.run(prompt)
 
-# Google Docs Integration
 def get_google_docs_service():
     scopes = ['https://www.googleapis.com/auth/documents']
     credentials = service_account.Credentials.from_service_account_info(
@@ -205,27 +199,25 @@ def replace_placeholders(service, document_id, cv_data):
         documentId=document_id, body={'requests': requests}).execute()
     return result
 
-if st.button("🚀 Align CV"):
+if st.button("\ud83d\ude80 Align CV"):
     token_count = count_tokens(st.session_state.prompt)
-    st.info(f"📝 Prompt token count: **{token_count}**")
+    st.info(f"\ud83d\udcdd Prompt token count: **{token_count}**")
 
-    max_tokens = 40000  # GPT-4.1 supports up to ~1 million tokens
+    max_tokens = 40000
     if token_count > max_tokens:
-        st.error(f"❌ Your prompt is too long by {token_count - max_tokens} tokens. Please shorten the CV or job description or prompt.")
+        st.error(f"\u274c Your prompt is too long by {token_count - max_tokens} tokens. Please shorten the CV or job description or prompt.")
     else:
         with st.spinner("Calling LLM to optimize your CV JSON..."):
             try:
                 result = call_agent(st.session_state.prompt)
                 try:
                     parsed = json.loads(result)
-                    st.success("✅ Valid JSON returned!")
+                    st.success("\u2705 Valid JSON returned!")
                     st.code(json.dumps(parsed, indent=2), language="json")
 
-                    # Google Docs integration
                     docs_service = get_google_docs_service()
                     drive_service = get_drive_service()
 
-                    # Step 1: Copy the template doc to create a new doc
                     TEMPLATE_DOC_ID = '1gjMpzdLazwSEetjz1mzVJkLVwsdRKs3zZnfM8qg4V74'
                     new_doc = drive_service.files().copy(
                         fileId=TEMPLATE_DOC_ID,
@@ -236,15 +228,14 @@ if st.button("🚀 Align CV"):
                     document = docs_service.documents().get(documentId=new_doc_id).execute()
                     placeholders = extract_placeholders(document)
 
-                    # Step 2: Map parsed JSON keys to placeholders and replace
                     cv_mapping = {key: parsed.get(key, '') for key in placeholders}
                     replace_placeholders(docs_service, new_doc_id, cv_mapping)
 
-                    st.success("✅ New Google Doc created and updated successfully!")
-                    st.markdown(f"🔗 [View Your Tailored CV](https://docs.google.com/document/d/{new_doc_id}/edit)", unsafe_allow_html=True)
+                    st.success("\u2705 New Google Doc created and updated successfully!")
+                    st.markdown(f"\ud83d\udd17 [View Your Tailored CV](https://docs.google.com/document/d/{new_doc_id}/edit)", unsafe_allow_html=True)
 
                 except json.JSONDecodeError:
-                    st.warning("⚠️ The result isn't valid JSON. Showing raw output:")
+                    st.warning("\u26a0\ufe0f The result isn't valid JSON. Showing raw output:")
                     st.code(result)
             except Exception as e:
-                st.error(f"❌ Error from LLM: {e}")
+                st.error(f"\u274c Error from LLM: {e}")
