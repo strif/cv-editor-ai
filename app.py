@@ -14,7 +14,6 @@ from google.oauth2 import service_account
 import re
 from datetime import datetime
 
-
 warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
 
 st.set_page_config(page_title="JobSherpa - AI CV Optimizer", layout="wide")
@@ -63,6 +62,66 @@ if job_url_input != st.session_state.get("job_desc", ""):
     st.session_state.job_desc = job_url_input
     st.session_state.job_description_text = extract_about_this_job_from_url(job_url_input)
     st.session_state.prompt = None
+
+def get_google_docs_service():
+    scopes = ['https://www.googleapis.com/auth/documents']
+    credentials = service_account.Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"], scopes=scopes)
+    service = build('docs', 'v1', credentials=credentials)
+    return service
+
+def get_drive_service():
+    scopes = ['https://www.googleapis.com/auth/drive']
+    credentials = service_account.Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"], scopes=scopes)
+    drive_service = build('drive', 'v3', credentials=credentials)
+    return drive_service
+
+def share_document_with_email(drive_service, file_id, user_email):
+    permission = {
+        'type': 'user',
+        'role': 'writer',
+        'emailAddress': user_email
+    }
+    drive_service.permissions().create(
+        fileId=file_id,
+        body=permission,
+        fields='id'
+    ).execute()
+
+def extract_placeholders(document):
+    placeholders = set()
+    content = document.get('body').get('content')
+    for element in content:
+        if 'paragraph' in element:
+            elements = element['paragraph'].get('elements', [])
+            for elem in elements:
+                text_run = elem.get('textRun')
+                if text_run:
+                    text = text_run.get('content')
+                    matches = re.findall(r'{{(.*?)}}', text)
+                    placeholders.update(matches)
+    return placeholders
+
+def replace_placeholders(service, document_id, cv_data):
+    requests = []
+    for key, value in cv_data.items():
+        requests.append({
+            'replaceAllText': {
+                'containsText': {
+                    'text': f'{{{{{key}}}}}',
+                    'matchCase': True
+                },
+                'replaceText': value
+            }
+        })
+
+    if not requests:
+        return None
+
+    result = service.documents().batchUpdate(
+        documentId=document_id, body={'requests': requests}).execute()
+    return result
 
 def create_prompt(cv_json, job_description_text, placeholders_list):
     placeholders_str = ", ".join(placeholders_list)
@@ -134,30 +193,11 @@ The output JSON should contain only these keys (no extras) and no additional com
 
 ---
 
-3. Output:
-- In valid JSON format only.
-
----
-
 {"Here is the job description: " + job_description_text if job_description_text else ""}
 
 CV JSON:
 {json.dumps(cv_json, indent=2)}
 """
-
-if "prompt" not in st.session_state or st.session_state.prompt is None:
-    job_description_text = st.session_state.get("job_description_text", "")
-    docs_service = get_google_docs_service()
-    TEMPLATE_DOC_ID = '1gjMpzdLazwSEetjz1mzVJkLVwsdRKs3zZnfM8qg4V74'
-    document = docs_service.documents().get(documentId=TEMPLATE_DOC_ID).execute()
-    placeholders = extract_placeholders(document)
-    st.session_state.prompt = create_prompt(cv_data, job_description_text, list(placeholders))
-
-st.subheader("Edit the prompt to customize your CV optimization")
-prompt = st.text_area("Prompt:", value=st.session_state.prompt, height=400)
-
-if prompt != st.session_state.prompt:
-    st.session_state.prompt = prompt
 
 def count_tokens(text: str, model_name: str = "gpt-4-turbo") -> int:
     try:
@@ -176,92 +216,25 @@ def call_agent(prompt):
     agent = get_conversational_agent(model_name="gpt-4-turbo")
     return agent.run(prompt)
 
-# Google Docs Integration
-def get_google_docs_service():
-    scopes = ['https://www.googleapis.com/auth/documents']
-    credentials = service_account.Credentials.from_service_account_info(
-        st.secrets["gcp_service_account"], scopes=scopes)
-    service = build('docs', 'v1', credentials=credentials)
-    return service
+if "prompt" not in st.session_state or st.session_state.prompt is None:
+    job_description_text = st.session_state.get("job_description_text", "")
+    docs_service = get_google_docs_service()
+    TEMPLATE_DOC_ID = '1gjMpzdLazwSEetjz1mzVJkLVwsdRKs3zZnfM8qg4V74'
+    document = docs_service.documents().get(documentId=TEMPLATE_DOC_ID).execute()
+    placeholders = extract_placeholders(document)
+    st.session_state.prompt = create_prompt(cv_data, job_description_text, list(placeholders))
 
-def get_drive_service():
-    scopes = ['https://www.googleapis.com/auth/drive']
-    credentials = service_account.Credentials.from_service_account_info(
-        st.secrets["gcp_service_account"], scopes=scopes)
-    drive_service = build('drive', 'v3', credentials=credentials)
-    return drive_service
+st.subheader("Edit the prompt to customize your CV optimization")
+prompt = st.text_area("Prompt:", value=st.session_state.prompt, height=400)
 
-# New function added: share document with your email
-def share_document_with_email(drive_service, file_id, user_email):
-    permission = {
-        'type': 'user',
-        'role': 'writer',  # or 'reader' for view-only
-        'emailAddress': user_email
-    }
-    drive_service.permissions().create(
-        fileId=file_id,
-        body=permission,
-        fields='id'
-    ).execute()
-
-def extract_placeholders(document):
-    placeholders = set()
-    content = document.get('body').get('content')
-
-    for element in content:
-        if 'paragraph' in element:
-            elements = element['paragraph'].get('elements', [])
-            for elem in elements:
-                text_run = elem.get('textRun')
-                if text_run:
-                    text = text_run.get('content')
-                    matches = re.findall(r'{{(.*?)}}', text)
-                    placeholders.update(matches)
-    return placeholders
-
-def replace_placeholders(service, document_id, cv_data):
-    requests = []
-    for key, value in cv_data.items():
-        requests.append({
-            'replaceAllText': {
-                'containsText': {
-                    'text': f'{{{{{key}}}}}',
-                    'matchCase': True
-                },
-                'replaceText': value
-            }
-        })
-
-    if not requests:
-        # No replacements to make; skip batchUpdate to avoid API error
-        return None
-
-    result = service.documents().batchUpdate(
-        documentId=document_id, body={'requests': requests}).execute()
-    return result
+if prompt != st.session_state.prompt:
+    st.session_state.prompt = prompt
 
 if st.button("🚀 Align CV"):
     token_count = count_tokens(st.session_state.prompt)
-
     job_desc_token_count = count_tokens(st.session_state.get("job_description_text", ""))
     cv_json_token_count = count_tokens(json.dumps(cv_data, indent=2))
     prompt_instructions_token_count = token_count - job_desc_token_count - cv_json_token_count
-
-    # Display detailed token diagnostics
-with st.sidebar.expander("🧠 Debug Info", expanded=False):
-    st.write("### Token Count Breakdown")
-    st.write(f"📄 Prompt Total: `{token_count}`")
-    st.write(f"📜 Job Description: `{job_desc_token_count}`")
-    st.write(f"🧾 CV JSON: `{cv_json_token_count}`")
-    st.write(f"📘 Prompt Instructions: `{prompt_instructions_token_count}`")
-    st.write("### Timestamp")
-    st.write(datetime.utcnow().isoformat() + " UTC")
-
-    st.write("### Prompt Preview")
-    st.code(st.session_state.prompt[:1000] + "\n...[truncated]...", language="text")
-
-    st.write("### CV JSON Preview")
-    st.code(json.dumps(cv_data, indent=2)[:1000] + "\n...[truncated]...", language="json")
 
     max_tokens = 40000
     if token_count > max_tokens:
@@ -286,14 +259,12 @@ with st.sidebar.expander("🧠 Debug Info", expanded=False):
 
                     new_doc_id = new_doc['id']
 
-                    # Share the new document with your email so you can access it:
-                    your_email = "kostantinosv@gmail.com"  # <-- Replace with your actual email here!
+                    your_email = "kostantinosv@gmail.com"
                     share_document_with_email(drive_service, new_doc_id, your_email)
 
                     document = docs_service.documents().get(documentId=new_doc_id).execute()
                     placeholders = extract_placeholders(document)
 
-                    # Debug print to check placeholders and parsed keys
                     st.write(f"Placeholders in document: {placeholders}")
                     st.write(f"Keys in parsed CV JSON: {list(parsed.keys())}")
 
@@ -310,3 +281,16 @@ with st.sidebar.expander("🧠 Debug Info", expanded=False):
                 st.error("❌ OpenAI API is rate-limiting. Please wait a moment and try again.")
             except Exception as e:
                 st.error(f"❌ Unexpected error from LLM: {e}")
+
+with st.sidebar.expander("🧠 Debug Info", expanded=False):
+    st.write("### Token Count Breakdown")
+    st.write(f"📄 Prompt Total: `{token_count}`")
+    st.write(f"📜 Job Description: `{job_desc_token_count}`")
+    st.write(f"🧾 CV JSON: `{cv_json_token_count}`")
+    st.write(f"📘 Prompt Instructions: `{prompt_instructions_token_count}`")
+    st.write("### Timestamp")
+    st.write(datetime.utcnow().isoformat() + " UTC")
+    st.write("### Prompt Preview")
+    st.code(st.session_state.prompt[:1000] + "\n...[truncated]...", language="text")
+    st.write("### CV JSON Preview")
+    st.code(json.dumps(cv_data, indent=2)[:1000] + "\n...[truncated]...", language="json")
