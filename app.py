@@ -2,7 +2,7 @@ import streamlit as st
 import json
 import os
 from llm_agent import get_conversational_agent
-from tenacity import retry, wait_random_exponential, stop_after_attempt, retry_if_exception_type
+from tenacity import retry, wait_random_exponential, stop_after_attempt, retry_if_exception_type, RetryError
 from openai._exceptions import RateLimitError
 import tiktoken
 from bs4 import BeautifulSoup
@@ -16,7 +16,7 @@ import re
 warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
 
 st.set_page_config(page_title="JobSherpa - AI CV Optimizer", layout="wide")
-st.title("\ud83d\udcc4 AI-Powered CV Optimizer")
+st.title("📄 AI-Powered CV Optimizer")
 
 # Load available CVs from 'cvs' directory
 CV_FOLDER = "cvs"
@@ -37,7 +37,7 @@ with open(cv_path, "r", encoding="utf-8") as f:
     cv_data = json.loads(cleaned_raw)
 
 # View CV
-with st.expander("\ud83d\udcc4 View CV"):
+with st.expander("📄 View CV"):
     st.code(json.dumps(cv_data, indent=2), language="json")
 
 # Job URL input
@@ -146,14 +146,15 @@ def count_tokens(text: str, model_name: str = "gpt-4.1") -> int:
     return len(tokens)
 
 @retry(
-    wait=wait_random_exponential(min=2, max=10),
-    stop=stop_after_attempt(5),
+    wait=wait_random_exponential(min=2, max=20),
+    stop=stop_after_attempt(8),
     retry=retry_if_exception_type(RateLimitError),
 )
 def call_agent(prompt):
     agent = get_conversational_agent(model_name="gpt-4.1")
     return agent.run(prompt)
 
+# Google Docs Integration
 def get_google_docs_service():
     scopes = ['https://www.googleapis.com/auth/documents']
     credentials = service_account.Credentials.from_service_account_info(
@@ -199,20 +200,20 @@ def replace_placeholders(service, document_id, cv_data):
         documentId=document_id, body={'requests': requests}).execute()
     return result
 
-if st.button("\ud83d\ude80 Align CV"):
+if st.button("🚀 Align CV"):
     token_count = count_tokens(st.session_state.prompt)
-    st.info(f"\ud83d\udcdd Prompt token count: **{token_count}**")
+    st.info(f"📝 Prompt token count: **{token_count}**")
 
     max_tokens = 40000
     if token_count > max_tokens:
-        st.error(f"\u274c Your prompt is too long by {token_count - max_tokens} tokens. Please shorten the CV or job description or prompt.")
+        st.error(f"❌ Your prompt is too long by {token_count - max_tokens} tokens. Please shorten the CV or job description or prompt.")
     else:
         with st.spinner("Calling LLM to optimize your CV JSON..."):
             try:
                 result = call_agent(st.session_state.prompt)
                 try:
                     parsed = json.loads(result)
-                    st.success("\u2705 Valid JSON returned!")
+                    st.success("✅ Valid JSON returned!")
                     st.code(json.dumps(parsed, indent=2), language="json")
 
                     docs_service = get_google_docs_service()
@@ -231,11 +232,13 @@ if st.button("\ud83d\ude80 Align CV"):
                     cv_mapping = {key: parsed.get(key, '') for key in placeholders}
                     replace_placeholders(docs_service, new_doc_id, cv_mapping)
 
-                    st.success("\u2705 New Google Doc created and updated successfully!")
-                    st.markdown(f"\ud83d\udd17 [View Your Tailored CV](https://docs.google.com/document/d/{new_doc_id}/edit)", unsafe_allow_html=True)
+                    st.success("✅ New Google Doc created and updated successfully!")
+                    st.markdown(f"🔗 [View Your Tailored CV](https://docs.google.com/document/d/{new_doc_id}/edit)", unsafe_allow_html=True)
 
                 except json.JSONDecodeError:
-                    st.warning("\u26a0\ufe0f The result isn't valid JSON. Showing raw output:")
+                    st.warning("⚠️ The result isn't valid JSON. Showing raw output:")
                     st.code(result)
+            except RetryError:
+                st.error("❌ OpenAI API is rate-limiting. Please wait a moment and try again.")
             except Exception as e:
-                st.error(f"\u274c Error from LLM: {e}")
+                st.error(f"❌ Unexpected error from LLM: {e}")
