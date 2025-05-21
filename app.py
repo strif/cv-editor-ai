@@ -231,10 +231,14 @@ if prompt != st.session_state.prompt:
     st.session_state.prompt = prompt
 
 if st.button("🚀 Align CV"):
-    token_count = count_tokens(st.session_state.prompt)
-    job_desc_token_count = count_tokens(st.session_state.get("job_description_text", ""))
-    cv_json_token_count = count_tokens(json.dumps(cv_data, indent=2))
-    prompt_instructions_token_count = token_count - job_desc_token_count - cv_json_token_count
+    st.session_state.token_count = count_tokens(st.session_state.prompt)
+    st.session_state.job_desc_token_count = count_tokens(st.session_state.get("job_description_text", ""))
+    st.session_state.cv_json_token_count = count_tokens(json.dumps(cv_data, indent=2))
+    st.session_state.prompt_instructions_token_count = (
+    st.session_state.token_count 
+    - st.session_state.job_desc_token_count 
+    - st.session_state.cv_json_token_count
+)
 
     max_tokens = 40000
     if token_count > max_tokens:
@@ -281,6 +285,13 @@ if st.button("🚀 Align CV"):
                 st.error("❌ OpenAI API is rate-limiting. Please wait a moment and try again.")
             except Exception as e:
                 st.error(f"❌ Unexpected error from LLM: {e}")
+
+# Safely define debug variables so they exist even if the button hasn't been clicked
+token_count = st.session_state.get("token_count", 0)
+job_desc_token_count = st.session_state.get("job_desc_token_count", 0)
+cv_json_token_count = st.session_state.get("cv_json_token_count", 0)
+prompt_instructions_token_count = st.session_state.get("prompt_instructions_token_count", 0)
+
 
 with st.sidebar.expander("🧠 Debug Info", expanded=False):
     st.write("### Token Count Breakdown")
